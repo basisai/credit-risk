@@ -1,0 +1,147 @@
+{
+    "NAME_CONTRACT_TYPE": [
+        "NAME_CONTRACT_TYPE_Cash loans",
+        "NAME_CONTRACT_TYPE_Revolving loans"
+    ],
+    "NAME_TYPE_SUITE": [
+        "NAME_TYPE_SUITE_Children",
+        "NAME_TYPE_SUITE_Family",
+        "NAME_TYPE_SUITE_Group of people",
+        "NAME_TYPE_SUITE_Other_A",
+        "NAME_TYPE_SUITE_Other_B",
+        "NAME_TYPE_SUITE_Spouse, partner",
+        "NAME_TYPE_SUITE_Unaccompanied"
+    ],
+    "NAME_INCOME_TYPE": [
+        "NAME_INCOME_TYPE_Commercial associate",
+        "NAME_INCOME_TYPE_Pensioner",
+        "NAME_INCOME_TYPE_State servant",
+        "NAME_INCOME_TYPE_Working"
+    ],
+    "NAME_EDUCATION_TYPE": [
+        "NAME_EDUCATION_TYPE_Higher education",
+        "NAME_EDUCATION_TYPE_Incomplete higher",
+        "NAME_EDUCATION_TYPE_Lower secondary",
+        "NAME_EDUCATION_TYPE_Secondary / secondary special"
+    ],
+    "NAME_FAMILY_STATUS": [
+        "NAME_FAMILY_STATUS_Civil marriage",
+        "NAME_FAMILY_STATUS_Married",
+        "NAME_FAMILY_STATUS_Separated",
+        "NAME_FAMILY_STATUS_Single / not married",
+        "NAME_FAMILY_STATUS_Widow"
+    ],
+    "NAME_HOUSING_TYPE": [
+        "NAME_HOUSING_TYPE_Co-op apartment",
+        "NAME_HOUSING_TYPE_House / apartment",
+        "NAME_HOUSING_TYPE_Municipal apartment",
+        "NAME_HOUSING_TYPE_Office apartment",
+        "NAME_HOUSING_TYPE_Rented apartment",
+        "NAME_HOUSING_TYPE_With parents"
+    ],
+    "OCCUPATION_TYPE": [
+        "OCCUPATION_TYPE_Accountants",
+        "OCCUPATION_TYPE_Cleaning staff",
+        "OCCUPATION_TYPE_Cooking staff",
+        "OCCUPATION_TYPE_Core staff",
+        "OCCUPATION_TYPE_Drivers",
+        "OCCUPATION_TYPE_HR staff",
+        "OCCUPATION_TYPE_High skill tech staff",
+        "OCCUPATION_TYPE_IT staff",
+        "OCCUPATION_TYPE_Laborers",
+        "OCCUPATION_TYPE_Low-skill Laborers",
+        "OCCUPATION_TYPE_Managers",
+        "OCCUPATION_TYPE_Medicine staff",
+        "OCCUPATION_TYPE_Private service staff",
+        "OCCUPATION_TYPE_Realty agents",
+        "OCCUPATION_TYPE_Sales staff",
+        "OCCUPATION_TYPE_Secretaries",
+        "OCCUPATION_TYPE_Security staff",
+        "OCCUPATION_TYPE_Waiters/barmen staff"
+    ],
+    "WEEKDAY_APPR_PROCESS_START": [
+        "WEEKDAY_APPR_PROCESS_START_MONDAY",
+        "WEEKDAY_APPR_PROCESS_START_TUESDAY",
+        "WEEKDAY_APPR_PROCESS_START_WEDNESDAY",
+        "WEEKDAY_APPR_PROCESS_START_THURSDAY",
+        "WEEKDAY_APPR_PROCESS_START_FRIDAY",
+        "WEEKDAY_APPR_PROCESS_START_SATURDAY",
+        "WEEKDAY_APPR_PROCESS_START_SUNDAY"
+    ],
+    "ORGANIZATION_TYPE": [
+        "ORGANIZATION_TYPE_Advertising",
+        "ORGANIZATION_TYPE_Agriculture",
+        "ORGANIZATION_TYPE_Bank",
+        "ORGANIZATION_TYPE_Business Entity Type 1",
+        "ORGANIZATION_TYPE_Business Entity Type 2",
+        "ORGANIZATION_TYPE_Business Entity Type 3",
+        "ORGANIZATION_TYPE_Construction",
+        "ORGANIZATION_TYPE_Culture",
+        "ORGANIZATION_TYPE_Electricity",
+        "ORGANIZATION_TYPE_Emergency",
+        "ORGANIZATION_TYPE_Government",
+        "ORGANIZATION_TYPE_Hotel",
+        "ORGANIZATION_TYPE_Housing",
+        "ORGANIZATION_TYPE_Industry: type 1",
+        "ORGANIZATION_TYPE_Industry: type 10",
+        "ORGANIZATION_TYPE_Industry: type 11",
+        "ORGANIZATION_TYPE_Industry: type 12",
+        "ORGANIZATION_TYPE_Industry: type 2",
+        "ORGANIZATION_TYPE_Industry: type 3",
+        "ORGANIZATION_TYPE_Industry: type 4",
+        "ORGANIZATION_TYPE_Industry: type 5",
+        "ORGANIZATION_TYPE_Industry: type 7",
+        "ORGANIZATION_TYPE_Industry: type 9",
+        "ORGANIZATION_TYPE_Insurance",
+        "ORGANIZATION_TYPE_Kindergarten",
+        "ORGANIZATION_TYPE_Legal Services",
+        "ORGANIZATION_TYPE_Medicine",
+        "ORGANIZATION_TYPE_Military",
+        "ORGANIZATION_TYPE_Mobile",
+        "ORGANIZATION_TYPE_Other",
+        "ORGANIZATION_TYPE_Police",
+        "ORGANIZATION_TYPE_Postal",
+        "ORGANIZATION_TYPE_Religion",
+        "ORGANIZATION_TYPE_Restaurant",
+        "ORGANIZATION_TYPE_School",
+        "ORGANIZATION_TYPE_Security",
+        "ORGANIZATION_TYPE_Security Ministries",
+        "ORGANIZATION_TYPE_Self-employed",
+        "ORGANIZATION_TYPE_Services",
+        "ORGANIZATION_TYPE_Trade: type 1",
+        "ORGANIZATION_TYPE_Trade: type 2",
+        "ORGANIZATION_TYPE_Trade: type 3",
+        "ORGANIZATION_TYPE_Trade: type 6",
+        "ORGANIZATION_TYPE_Trade: type 7",
+        "ORGANIZATION_TYPE_Transport: type 1",
+        "ORGANIZATION_TYPE_Transport: type 2",
+        "ORGANIZATION_TYPE_Transport: type 3",
+        "ORGANIZATION_TYPE_Transport: type 4",
+        "ORGANIZATION_TYPE_University",
+        "ORGANIZATION_TYPE_XNA"
+    ],
+    "FONDKAPREMONT_MODE": [
+        "FONDKAPREMONT_MODE_not specified",
+        "FONDKAPREMONT_MODE_org spec account",
+        "FONDKAPREMONT_MODE_reg oper account",
+        "FONDKAPREMONT_MODE_reg oper spec account"
+    ],
+    "HOUSETYPE_MODE": [
+        "HOUSETYPE_MODE_block of flats",
+        "HOUSETYPE_MODE_specific housing",
+        "HOUSETYPE_MODE_terraced house"
+    ],
+    "WALLSMATERIAL_MODE": [
+        "WALLSMATERIAL_MODE_Block",
+        "WALLSMATERIAL_MODE_Mixed",
+        "WALLSMATERIAL_MODE_Monolithic",
+        "WALLSMATERIAL_MODE_Others",
+        "WALLSMATERIAL_MODE_Panel",
+        "WALLSMATERIAL_MODE_Stone, brick",
+        "WALLSMATERIAL_MODE_Wooden"
+    ],
+    "EMERGENCYSTATE_MODE": [
+        "EMERGENCYSTATE_MODE_No",
+        "EMERGENCYSTATE_MODE_Yes"
+    ]
+}
