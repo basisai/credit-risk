@@ -62,12 +62,12 @@ def compute_log_metrics(clf, x_val, y_val):
     f1_score = metrics.f1_score(y_val, y_pred)
     roc_auc = metrics.roc_auc_score(y_val, y_prob)
     avg_prc = metrics.average_precision_score(y_val, y_prob)
-    print("Evaluation"
-          f"  Accuracy          = {acc:.4f}"
-          f"  Precision         = {precision:.4f}"
-          f"  Recall            = {recall:.6f}"
-          f"  F1 score          = {f1_score:.6f}"
-          f"  ROC AUC           = {roc_auc:.6f}"
+    print("Evaluation\n"
+          f"  Accuracy          = {acc:.4f}\n"
+          f"  Precision         = {precision:.4f}\n"
+          f"  Recall            = {recall:.6f}\n"
+          f"  F1 score          = {f1_score:.6f}\n"
+          f"  ROC AUC           = {roc_auc:.6f}\n"
           f"  Average precision = {avg_prc:.6f}")
 
     # Log metrics
@@ -75,7 +75,6 @@ def compute_log_metrics(clf, x_val, y_val):
     bedrock.log_metric("Accuracy", acc)
     bedrock.log_metric("ROC AUC", roc_auc)
     bedrock.log_metric("Avg precision", avg_prc)
-    return {"Model version": MODEL_VER, "Accuracy": acc, "ROC AUC": roc_auc, "Avg precision": avg_prc}
 
 
 def trainer(execution_date):

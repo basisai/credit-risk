@@ -98,7 +98,7 @@ def fai(debias=False):
     unprivileged_attribute_values = CONFIG_FAI[protected_attribute]["unprivileged_attribute_values"]
 
     # Load data
-    val = load_data("output/val.csv").fillna(0)  # Fairness does not allow NaNs
+    val = load_data("output/test.gz.parquet").fillna(0)  # Fairness does not allow NaNs
     x_val = val[FEATURES]
     y_val = val[TARGET].values
 
@@ -121,11 +121,14 @@ def fai(debias=False):
     st.write(f"Absolute fairness is 1. The model is considered fair if **ratio is between {1-fthresh:.2f} and {1+fthresh:.2f}**.")
 
     # Compute fairness metrics
-    fmeasures, clf_metric = get_fmeasures(
-        x_val, y_val, y_pred, protected_attribute,
-        privileged_attribute_values, unprivileged_attribute_values,
-        fthresh, METRICS_TO_USE,
-    )
+    fmeasures, clf_metric = get_fmeasures(x_val,
+                                          y_val,
+                                          y_pred,
+                                          protected_attribute,
+                                          privileged_attribute_values,
+                                          unprivileged_attribute_values,
+                                          fthresh=fthresh,
+                                          fairness_metrics=METRICS_TO_USE)
 
     st.altair_chart(plot_fmeasures_bar(fmeasures, fthresh), use_container_width=True)
     
@@ -145,39 +148,6 @@ def fai(debias=False):
     cm3 = clf_metric.binary_confusion_matrix(privileged=False)
     c3 = get_confusion_matrix_chart(cm3, "Unprivileged")
     st.altair_chart(c2 | c3, use_container_width=False)
-
-    # if debias:
-    #     # Compute original model confusion matrix
-    #     orig_y_pred = (y_prob > cutoff).astype(int)
-    #     orig_fmeasures, orig_clf_metric = get_fmeasures(
-    #         x_val, y_val, orig_y_pred, protected_attribute,
-    #         privileged_attribute_values, unprivileged_attribute_values,
-    #         fthresh, METRICS_TO_USE,
-    #     )
-    #
-    #     st.header("Comparison before and after mitigation")
-    #     for m in METRICS_TO_USE:
-    #         source = pd.concat([orig_fmeasures.query(f"Metric == '{m}'"),
-    #                             fmeasures.query(f"Metric == '{m}'")])
-    #         source["Metric"] = ["1-Before Mitigation", "2-After Mitigation"]
-    #
-    #         st.write(m)
-    #         st.altair_chart(plot_fmeasures_bar(source, fthresh), use_container_width=True)
-    #
-    #     cm4 = orig_clf_metric.binary_confusion_matrix(privileged=None)
-    #     c4a = get_confusion_matrix_chart(cm4, "All: Before Mitigation")
-    #     c4b = get_confusion_matrix_chart(cm1, "All: After Mitigation")
-    #     st.altair_chart(c4a | c4b, use_container_width=False)
-    #
-    #     cm5 = orig_clf_metric.binary_confusion_matrix(privileged=True)
-    #     c5a = get_confusion_matrix_chart(cm5, "Privileged: Before Mitigation")
-    #     c5b = get_confusion_matrix_chart(cm2, "Privileged: After Mitigation")
-    #     st.altair_chart(c5a | c5b, use_container_width=False)
-    #
-    #     cm6 = orig_clf_metric.binary_confusion_matrix(privileged=False)
-    #     c6a = get_confusion_matrix_chart(cm6, "Unprivileged: Before Mitigation")
-    #     c6b = get_confusion_matrix_chart(cm3, "Unprivileged: After Mitigation")
-    #     st.altair_chart(c6a | c6b, use_container_width=False)
 
     st.header("Annex")
     st.subheader("Performance Metrics")
@@ -220,7 +190,7 @@ def compare():
     unprivileged_attribute_values = CONFIG_FAI[protected_attribute]["unprivileged_attribute_values"]
 
     # Load data
-    val = load_data("output/val.csv").fillna(0)  # Fairness does not allow NaNs
+    val = load_data("output/test.gz.parquet").fillna(0)  # Fairness does not allow NaNs
     x_val = val[FEATURES]
     y_val = val[TARGET].values
 

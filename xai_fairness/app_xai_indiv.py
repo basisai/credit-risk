@@ -5,18 +5,23 @@ from app_utils import load_model, load_data
 from preprocess.constants import FEATURES, TARGET
 from .static_xai import make_source_waterfall, waterfall_chart
 
+@st.cache
+def get_sk_ids(series):
+    return series.tolist()[:100]
+
 
 def xai_indiv():
     st.title("Individual Instance Explainability")
     
     clf = load_model("output/lgb.pkl")
     sample = load_data("output/test.gz.parquet")
+    sk_ids = get_sk_ids(sample["SK_ID_CURR"])
 
     # Load explainer
     explainer = shap.TreeExplainer(clf)
     
     # Select instance
-    sk_id = st.selectbox("Select SK_ID", 0, sample["SK_ID_CURR"].values, 0)
+    sk_id = st.selectbox("Select SK_ID", sk_ids, 0)
     instance = sample.query(f"SK_ID_CURR == '{sk_id}'")
     x_instance = instance[FEATURES]
     y_instance = instance[TARGET].item()
@@ -34,7 +39,7 @@ def xai_indiv():
     st.subheader("SHAP values")
     shap_values = explainer.shap_values(x_instance)[1][0]
     base_value = explainer.expected_value[1]
-    source = make_source_waterfall(instance, base_value, shap_values, max_display=20)
+    source = make_source_waterfall(x_instance, base_value, shap_values, max_display=20)
     st.altair_chart(waterfall_chart(source), use_container_width=True)
     
 

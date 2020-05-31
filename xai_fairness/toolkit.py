@@ -127,11 +127,13 @@ def prepare_dataset(features,
                     labels,
                     protected_attribute,
                     privileged_attribute_values,
-                    unprivileged_attribute_values):
+                    unprivileged_attribute_values,
+                    favorable_label=1.,
+                    unfavorable_label=0.):
     """Prepare dataset for computing fairness metrics."""
     df = features.copy()
     df['outcome'] = labels
-    
+
     return BinaryLabelDataset(
         df=df,
         label_names=['outcome'],
@@ -139,6 +141,8 @@ def prepare_dataset(features,
         protected_attribute_names=[protected_attribute],
         privileged_protected_attributes=[np.array(privileged_attribute_values)],
         unprivileged_protected_attributes=[np.array(unprivileged_attribute_values)],
+        favorable_label=favorable_label,
+        unfavorable_label=unfavorable_label,
     )
 
 
@@ -156,7 +160,8 @@ def get_fairness(grdtruth,
         privileged_groups=[{protected_attribute: v} for v in privileged_attribute_values],
     )
     fmeasures = compute_fairness_metrics(clf_metric)
-    fmeasures["Fair?"] = fmeasures["Ratio"].apply(lambda x: "Yes" if np.abs(x - 1) < threshold else "No")
+    fmeasures["Fair?"] = fmeasures["Ratio"].apply(
+        lambda x: "Yes" if np.abs(x - 1) < threshold else "No")
     
     print(f"Fairness is when deviation from 1 is less than {threshold}")
     display(fmeasures.iloc[:3].style.applymap(color_red, subset=["Fair?"]))

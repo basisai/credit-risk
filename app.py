@@ -1,7 +1,23 @@
+import base64
+from pathlib import Path
+
 import streamlit as st
 
 from xai_fairness.app_fai import fai
 from xai_fairness.app_xai_indiv import xai_indiv
+
+
+def uri_encode_path(path, mime="image/png"):
+    raw = Path(path).read_bytes()
+    b64 = base64.b64encode(raw).decode()
+    return f"data:{mime};base64,{b64}"
+
+
+def add_header(path):
+    st.markdown(
+        "<img src='{}' class='img-fluid'>".format(uri_encode_path(path)),
+        unsafe_allow_html=True,
+    )
 
 
 def main():
@@ -16,6 +32,7 @@ def main():
     #     """,
     #     unsafe_allow_html=True,
     # )
+    add_header("assets/logo.png")
 
     select = st.sidebar.selectbox(
         "Select dashboard",
