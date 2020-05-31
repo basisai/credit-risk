@@ -87,22 +87,11 @@ def prepare_pred(x_val, y_val, debias=False):
 
 
 def fai(debias=False):
-    # max_width = 1000  #st.sidebar.slider("Set page width", min_value=700, max_value=1500, value=1000, step=20)
-    # st.markdown(
-    #     f"""
-    #     <style>
-    #     .reportview-container .main .block-container{{
-    #         max-width: {max_width}px;
-    #     }}
-    #     </style>
-    #     """,
-    #     unsafe_allow_html=True,
-    # )
-    st.subheader("User Write-up")
-    if debias:
-        st.write(CONFIG["after_mitigation"])
-    else:
-        st.write(CONFIG["before_mitigation"])
+    # st.subheader("User Write-up")
+    # if debias:
+    #     st.write(CONFIG["after_mitigation"])
+    # else:
+    #     st.write(CONFIG["before_mitigation"])
 
     protected_attribute = st.selectbox("Select protected column.", list(CONFIG_FAI.keys()))
     privileged_attribute_values = CONFIG_FAI[protected_attribute]["privileged_attribute_values"]
