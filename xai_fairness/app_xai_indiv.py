@@ -7,14 +7,12 @@ from .static_xai import make_source_waterfall, waterfall_chart
 
 @st.cache
 def get_sk_ids(series):
-    return series.tolist()[:100]
+    return series.tolist()
 
 
 def xai_indiv():
-    st.title("Individual Instance Explainability")
-    
     clf = load_model("output/lgb.pkl")
-    sample = load_data("output/test.gz.parquet")
+    sample = load_data("output/test.gz.parquet", num_rows=100)
     sk_ids = get_sk_ids(sample["SK_ID_CURR"])
 
     # Load explainer
@@ -40,7 +38,8 @@ def xai_indiv():
     shap_values = explainer.shap_values(x_instance)[1][0]
     base_value = explainer.expected_value[1]
     source = make_source_waterfall(x_instance, base_value, shap_values, max_display=20)
-    st.altair_chart(waterfall_chart(source), use_container_width=True)
+    st.altair_chart(waterfall_chart(source).properties(height=500),
+                    use_container_width=True)
     
 
 if __name__ == "__main__":

@@ -224,7 +224,7 @@ def waterfall_chart(source, decimal=3):
 
     bars = alt.Chart(source).mark_bar().encode(
         alt.X("feature:O", sort=source["feature"].tolist()),
-        alt.Y("open:Q", scale=alt.Scale(zero=False)),
+        alt.Y("open:Q", title="", scale=alt.Scale(zero=False)),
         alt.Y2("close:Q"),
         alt.Tooltip(["feature", "feature_value", "shap_value"]),
     )

@@ -10,8 +10,11 @@ def load_model(filename):
 
 
 @st.cache
-def load_data(filename):
-    return pd.read_parquet(filename)
+def load_data(filename, num_rows=None):
+    df = pd.read_parquet(filename)
+    if num_rows is not None:
+        return df.iloc[:num_rows]
+    return df
 
 
 @st.cache(allow_output_mutation=True)
