@@ -1,4 +1,0 @@
-# This file will provide the user's inputs
-
-metrics_to_use: ["Equal opportunity", "Predictive parity", "Statistical parity"]
-# ["Equal opportunity", "Predictive parity", "Statistical parity", "Predictive equality", "Equalized odd", "Conditional use accuracy equality"]

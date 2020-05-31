@@ -1,4 +1,3 @@
-bdrk==0.2.1
 bdrk[model-monitoring]==0.2.1
 fastparquet==0.4.0
 numpy==1.18.4

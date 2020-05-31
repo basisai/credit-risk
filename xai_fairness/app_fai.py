@@ -9,8 +9,7 @@ from preprocess.constants import FEATURES, TARGET, CONFIG_FAI
 from .static_fai import get_fmeasures, plot_fmeasures_bar, color_red
 from .toolkit import prepare_dataset, get_perf_measure_by_group
 
-CONFIG = yaml.load(open("config.yaml", "r"), Loader=yaml.SafeLoader)
-METRICS_TO_USE = CONFIG["metrics_to_use"]
+METRICS_TO_USE = ["Equal opportunity", "Predictive parity", "Statistical parity"]
 
 
 def get_confusion_matrix_chart(cm, title):
