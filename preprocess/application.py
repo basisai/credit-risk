@@ -5,7 +5,6 @@ from datetime import timedelta
 
 import numpy as np
 import pandas as pd
-import dask.dataframe as dd
 
 from .constants import TARGET
 from .utils import onehot_enc
@@ -49,7 +48,7 @@ def load_data(execution_date):
     data_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
     data_dir = BUCKET + "application/date_partition={}/".format(data_date)
     df = (
-        dd.read_parquet(data_dir + "applications.gz.parquet")
+        pd.read_parquet(data_dir + "applications.gz.parquet", engine='fastparquet')
         .query("CODE_GENDER != 'XNA'")   # Remove applications with XNA CODE_GENDER 
     ).compute()
     return df
