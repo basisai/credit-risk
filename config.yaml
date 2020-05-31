@@ -1,20 +1,4 @@
 # This file will provide the user's inputs
 
-before_mitigation: |
-  We train a LightGBM classifier because it has the best model performance compared with other methods such as baseline logistic regression and random forest classifier. Also, a LightGBM model wins in terms of speed compared with random forest.
-
-  This model serves as a baseline for comparison with subsequent mitigation methods.
-
-
-after_mitigation: |
-  We use calibrated equalized odds post-processor, which is is a post-processing technique that optimizes over calibrated classifier score outputs to find probabilities with which to change output labels with an equalized odds objective.
-
-  We train this model with `Sex` as the constraint feature since this feature ranks the highest in feature importance among the protected features from our explainability analysis.
-
-  We chose this model because it improves equal opportunity for both protected features `Sex=Male` and `Race=White`, while not degrading predictive parity. Statistical parity is not of particular concern in this project as the requirement is not to balance the probability for male and female applicants to have good predicted credit score. The objective is to balance the probability of an applicant with an actual good credit score to be incorrectly assigned a bad predicted credit score for male and female applicants.
-
-  We also explore other methods such as adversarial debiasing. The performance in terms of model and fairness have not been as good as calibrated equalized odds.
-
-
 metrics_to_use: ["Equal opportunity", "Predictive parity", "Statistical parity"]
 # ["Equal opportunity", "Predictive parity", "Statistical parity", "Predictive equality", "Equalized odd", "Conditional use accuracy equality"]

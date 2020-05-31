@@ -28,7 +28,6 @@ OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 def get_model():
     if MODEL_VER == "lightgbm":
         return lgb.LGBMClassifier(
-            nthread=-1,
             num_leaves=NUM_LEAVES,
             learning_rate=0.02,
             n_estimators=10000,
@@ -44,7 +43,6 @@ def get_model():
         )
     elif MODEL_VER == "xgboost":
         return xgb.XGBClassifier(
-            nthread=-1,
             num_leaves=NUM_LEAVES,
             learning_rate=0.02,
             n_estimators=10000,

@@ -5,7 +5,7 @@ import streamlit as st
 from sklearn import metrics
 
 from app_utils import load_model, load_data, predict
-from constants import FEATURES, TARGET, CONFIG_FAI
+from preprocess.constants import FEATURES, TARGET, CONFIG_FAI
 from .static_fai import get_fmeasures, plot_fmeasures_bar, color_red
 from .toolkit import prepare_dataset, get_perf_measure_by_group
 

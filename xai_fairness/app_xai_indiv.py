@@ -1,24 +1,11 @@
-import pickle
-
-import pandas as pd
 import shap
 import streamlit as st
 
 from app_utils import load_model, load_data
-from constants import FEATURES, TARGET
+from preprocess.constants import FEATURES, TARGET
 from .static_xai import make_source_waterfall, waterfall_chart
 
 
-@st.cache(allow_output_mutation=True)
-def load_model(filename):
-    return pickle.load(open(filename, "rb"))
-
-
-@st.cache
-def load_data(filename):
-    return pd.read_parquet(filename)
-
-    
 def xai_indiv():
     st.title("Individual Instance Explainability")
     
