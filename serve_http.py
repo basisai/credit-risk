@@ -14,13 +14,13 @@ from preprocess.constants import FEATURES
 model = pickle.load(open("/artefact/model.pkl", "rb"))
 
 # Simulate redis store
-redis = pd.read_csv("output/fs.csv")
+redis = pd.read_parquet("output/test.gz.parquet")
 
 
 def read_redis_features(sk_id):
     """Gets all the values from redis."""
     # Simulate querying redis
-    row = redis.query(f"SK_ID == '{sk_id}'")
+    row = redis.query(f"SK_ID_CURR == '{sk_id}'")
     if len(row) == 0:
         return None
     return row[FEATURES]

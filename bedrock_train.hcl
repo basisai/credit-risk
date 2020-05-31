@@ -22,8 +22,8 @@ train {
         ]
         script = [{sh = ["python3 features_trainer.py"]}]
         resources {
-            cpu = "4"
-            memory = "30G"
+            cpu = "2"
+            memory = "12G"
         }
          depends_on = ["preproc_agg"]
     }
@@ -36,8 +36,8 @@ train {
         ]
         script = [{sh = ["python3 train.py"]}]
         resources {
-            cpu = "4"
-            memory = "32G"
+            cpu = "2"
+            memory = "12G"
         }
         depends_on = ["features_trainer"]
     }
