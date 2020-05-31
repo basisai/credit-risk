@@ -23,26 +23,36 @@ BUCKET = "gs://span-temp-production/"
 # BUCKET = "data/"
 
 MODEL_VER = os.getenv("MODEL_VER")
-LR = float(os.getenv("LR"))
+NUM_LEAVES = int(os.getenv("NUM_LEAVES"))
 OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 
 
 def get_model():
     if MODEL_VER == "lightgbm":
-        clf = lgb.LGBMClassifier(
+        return lgb.LGBMClassifier(
             nthread=-1,
-            num_leaves=34,
-            learning_rate=LR,
+            num_leaves=NUM_LEAVES,
+            learning_rate=0.02,
+            n_estimators=10000,
+            colsample_bytree=0.9497036,
+            subsample=0.8715623,
+            max_depth=8,
+            reg_alpha=0.041545473,
+            reg_lambda=0.0735294,
+            min_split_gain=0.0222415,
+            min_child_weight=39.3259775,
+            silent=-1,
+            verbose=-1,
+        )
+    elif MODEL_VER == "xgboost":
+        return xgb.XGBClassifier(
+            nthread=-1,
+            num_leaves=NUM_LEAVES,
+            learning_rate=0.02,
             n_estimators=10000,
         )
-    
-    clf = xgb.XGBClassifier(
-        nthread=-1,
-        num_leaves=34,
-        learning_rate=LR,
-        n_estimators=10000,
-    )
-    return clf
+    else:
+        raise Exception("Model not implemented")
     
 
 def compute_log_metrics(clf, x_val, y_val):
@@ -78,7 +88,7 @@ def trainer(execution_date):
     train_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
     train_dir = BUCKET + "train_data/date_partition={}/".format(train_date)
     data = pd.read_parquet(train_dir + "train.gz.parquet")
-    print("  Train_data shape =", data.shape)
+    print("  Train data shape:", data.shape)
     
     train, valid = train_test_split(data, test_size=0.2, random_state=0)
     x_train, y_train = train[FEATURES], train[TARGET]
@@ -87,7 +97,12 @@ def trainer(execution_date):
     print("Train model")
     start = time.time()
     clf = get_model()
-    clf.fit(x_train, y_train)
+    clf.fit(x_train,
+            y_train,
+            eval_set=[(x_train, y_train), (x_valid, y_valid)],
+            eval_metric='auc',
+            verbose=200,
+            early_stopping_rounds=200)
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
     print("Score model")

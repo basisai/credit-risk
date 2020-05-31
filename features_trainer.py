@@ -1,5 +1,5 @@
 """
-Script to perform preprocessing
+Script to generate features for training.
 """
 import os
 from datetime import timedelta
@@ -52,7 +52,8 @@ def generate_features(execution_date):
         print("  Credit card balance df shape:", cc.shape)
         df = df.join(cc, how='left', on='SK_ID_CURR')
 
-    # Save train
+    print("\nSave train data")
+    print("  Train data shape:", df.shape)
     train_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
     train_dir = BUCKET + "train_data/date_partition={}/".format(train_date)
     os.mkdir(train_dir)
