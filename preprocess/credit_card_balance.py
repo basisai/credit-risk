@@ -9,7 +9,8 @@ import pandas as pd
 
 from .utils import onehot_enc
 
-AUX_DIR = "data/auxiliary/"
+BUCKET = "gs://bedrock-sample/credit/"
+# BUCKET = "data/"
 
 CATEGORICAL_COLS = ['NAME_CONTRACT_STATUS']
 
@@ -19,7 +20,7 @@ CATEGORIES = [
 
 
 def credit_card_balance():
-    cc = pd.read_parquet(AUX_DIR + 'credit_card_balance.gz.parquet')
+    cc = pd.read_parquet(BUCKET + 'auxiliary/credit_card_balance.gz.parquet')
     
     # One-hot encoding of categorical features
     cc, _ = onehot_enc(cc, CATEGORICAL_COLS, CATEGORIES)

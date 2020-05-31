@@ -6,7 +6,8 @@ import pandas as pd
 
 from .utils import onehot_enc
 
-AUX_DIR = "data/auxiliary/"
+BUCKET = "gs://bedrock-sample/credit/"
+# BUCKET = "data/"
 
 BUREAU_CATEGORICAL_COLS = ['CREDIT_ACTIVE', 'CREDIT_CURRENCY', 'CREDIT_TYPE']
 
@@ -24,8 +25,8 @@ BB_CATEGORIES = [
 
 
 def bureau_and_balance():
-    bureau = pd.read_parquet(AUX_DIR + 'bureau.gz.parquet')
-    bb = pd.read_parquet(AUX_DIR + 'bureau_balance.gz.parquet')
+    bureau = pd.read_parquet(BUCKET + 'auxiliary/bureau.gz.parquet')
+    bb = pd.read_parquet(BUCKET + 'auxiliary/bureau_balance.gz.parquet')
     
     # One-hot encoding of categorical features
     bureau, bureau_cat = onehot_enc(bureau, BUREAU_CATEGORICAL_COLS, BUREAU_CATEGORIES)

@@ -9,7 +9,8 @@ import pandas as pd
 
 from .utils import onehot_enc
 
-AUX_DIR = "data/auxiliary/"
+BUCKET = "gs://bedrock-sample/credit/"
+# BUCKET = "data/"
 
 CATEGORICAL_COLS = [
     'NAME_CONTRACT_TYPE', 'WEEKDAY_APPR_PROCESS_START', 'FLAG_LAST_APPL_PER_CONTRACT', 'NAME_CASH_LOAN_PURPOSE', 'NAME_CONTRACT_STATUS', 'NAME_PAYMENT_TYPE', 'CODE_REJECT_REASON', 'NAME_TYPE_SUITE', 'NAME_CLIENT_TYPE', 'NAME_GOODS_CATEGORY', 'NAME_PORTFOLIO', 'NAME_PRODUCT_TYPE', 'CHANNEL_TYPE', 'NAME_SELLER_INDUSTRY', 'NAME_YIELD_GROUP', 'PRODUCT_COMBINATION']
@@ -35,7 +36,7 @@ CATEGORIES = [
 
 
 def previous_application():
-    prev = pd.read_parquet(AUX_DIR + 'previous_application.gz.parquet')
+    prev = pd.read_parquet(BUCKET + 'auxiliary/previous_application.gz.parquet')
     
     # One-hot encoding of categorical features
     prev, cat_cols = onehot_enc(prev, CATEGORICAL_COLS, CATEGORIES)

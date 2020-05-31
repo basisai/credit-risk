@@ -23,25 +23,11 @@ TARGET = 'TARGET'
 # List bias and privileged info
 CONFIG_FAI = {
     'CODE_GENDER': {
-        'bias_info': {
-            'favorable_label': 0,
-            'unfavorable_label': 1,
-            'protected_columns': ['CODE_GENDER'],
-        },
-        'privileged_info': {
-            'unprivileged_groups': [{'CODE_GENDER': 1}],
-            'privileged_groups': [{'CODE_GENDER': 0}],
-        },
+        'unprivileged_attribute_values': [1],
+        'privileged_attribute_values': [0],
     },
     'NAME_EDUCATION_TYPE_Higher education': {
-        'bias_info': {
-            'favorable_label': 0,
-            'unfavorable_label': 1,
-            'protected_columns': ['NAME_EDUCATION_TYPE_Higher education'],
-        },
-        'privileged_info': {
-            'unprivileged_groups': [{'NAME_EDUCATION_TYPE_Higher education': 0}],
-            'privileged_groups': [{'NAME_EDUCATION_TYPE_Higher education': 1}],
-        },
+        'unprivileged_attribute_values': [0],
+        'privileged_attribute_values': [1],
     },
 }

@@ -10,11 +10,12 @@ import pandas as pd
 from .constants import TARGET
 from .utils import onehot_enc
 
-AUX_DIR = "data/auxiliary/"
+BUCKET = "gs://bedrock-sample/credit/"
+# BUCKET = "data/"
 
 
 def installments_payments():
-    ins = pd.read_parquet(AUX_DIR + 'installments_payments.gz.parquet')
+    ins = pd.read_parquet(BUCKET + 'auxiliary/installments_payments.gz.parquet')
     
     # Percentage and difference paid in each installment (amount paid and installment value)
     ins['PAYMENT_PERC'] = ins['AMT_PAYMENT'] / ins['AMT_INSTALMENT']
