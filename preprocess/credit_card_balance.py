@@ -1,13 +1,9 @@
 """
 Script to perform preprocessing of credit_card_balance data.
 """
-import time
-from datetime import timedelta
-
-import numpy as np
 import pandas as pd
 
-from .utils import onehot_enc
+from .utils import load_data, onehot_enc
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
@@ -20,7 +16,7 @@ CATEGORIES = [
 
 
 def credit_card_balance():
-    cc = pd.read_parquet(BUCKET + 'auxiliary/credit_card_balance.gz.parquet')
+    cc = load_data(BUCKET + 'auxiliary/credit_card_balance.csv')
     
     # One-hot encoding of categorical features
     cc, _ = onehot_enc(cc, CATEGORICAL_COLS, CATEGORIES)

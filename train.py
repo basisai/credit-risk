@@ -5,9 +5,7 @@ import logging
 import os
 import pickle
 import time
-from datetime import timedelta
 
-import pandas as pd
 from bedrock_client.bedrock.api import BedrockApi
 from bedrock_client.bedrock.metrics.service import ModelMonitoringService
 import lightgbm as lgb
@@ -17,10 +15,10 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from preprocess.constants import FEATURES, TARGET
-from preprocess.utils import get_execution_date
+from preprocess.utils import load_data, get_execution_date
 
-BUCKET = "gs://span-temp-production/"
-# BUCKET = "data/"
+TMP_BUCKET = "gs://span-temp-production/"
+# TMP_BUCKET = "data/"
 
 MODEL_VER = os.getenv("MODEL_VER")
 NUM_LEAVES = int(os.getenv("NUM_LEAVES"))
@@ -85,9 +83,7 @@ def compute_log_metrics(clf, x_val, y_val):
 def trainer(execution_date):
     """Entry point to perform training."""
     print("Load train data")
-    train_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
-    train_dir = BUCKET + "train_data/date_partition={}/".format(train_date)
-    data = pd.read_parquet(train_dir + "train.gz.parquet")
+    data = load_data(TMP_BUCKET + "credit_train/train.csv")
     print("  Train data shape:", data.shape)
     
     train, valid = train_test_split(data, test_size=0.2, random_state=0)

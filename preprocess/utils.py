@@ -33,6 +33,16 @@ def get_execution_date():
     return execution_date
 
 
+def load_data(file_path, file_type="pd_csv"):
+    """Load data."""
+    if file_type == "pd_csv":
+        return pd.read_csv(file_path)
+    elif file_type == "pd_parquet":
+        return pd.read_parquet(file_path)
+    else:
+        raise Exception("Not implemented")
+
+
 def onehot_enc(df, categorical_columns, categories):
     """One-hot encoding of categorical columns."""
     noncategorical_cols = [col for col in df.columns if col not in categorical_columns]

@@ -1,10 +1,9 @@
 """
 Script to perform preprocessing of bureau and bureau_balance data.
 """
-import numpy as np
 import pandas as pd
 
-from .utils import onehot_enc
+from .utils import load_data, onehot_enc
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
@@ -25,8 +24,8 @@ BB_CATEGORIES = [
 
 
 def bureau_and_balance():
-    bureau = pd.read_parquet(BUCKET + 'auxiliary/bureau.gz.parquet')
-    bb = pd.read_parquet(BUCKET + 'auxiliary/bureau_balance.gz.parquet')
+    bureau = load_data(BUCKET + 'auxiliary/bureau.csv')
+    bb = load_data(BUCKET + 'auxiliary/bureau_balance.csv')
     
     # One-hot encoding of categorical features
     bureau, bureau_cat = onehot_enc(bureau, BUREAU_CATEGORICAL_COLS, BUREAU_CATEGORIES)

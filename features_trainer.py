@@ -1,9 +1,6 @@
 """
 Script to generate features for training.
 """
-import os
-from datetime import timedelta
-
 from preprocess.application import application
 from preprocess.bureau_and_balance import bureau_and_balance
 from preprocess.previous_application import previous_application
@@ -12,8 +9,8 @@ from preprocess.installments_payments import installments_payments
 from preprocess.credit_card_balance import credit_card_balance
 from preprocess.utils import timer, get_execution_date
 
-BUCKET = "gs://span-temp-production/"
-# BUCKET = "data/"
+TMP_BUCKET = "gs://span-temp-production/"
+# TMP_BUCKET = "data/"
 
 
 def generate_features(execution_date):
@@ -54,14 +51,7 @@ def generate_features(execution_date):
 
     print("\nSave train data")
     print("  Train data shape:", df.shape)
-    train_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
-    train_dir = BUCKET + "train_data/date_partition={}/".format(train_date)
-    os.mkdir(train_dir)
-    df.to_parquet(
-        train_dir + "train.gz.parquet",
-        engine="fastparquet",
-        compression="gzip",
-    )
+    df.to_csv(TMP_BUCKET + "credit_train/train.csv", index=False)
 
     
 def main():

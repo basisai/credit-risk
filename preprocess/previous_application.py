@@ -1,13 +1,10 @@
 """
 Script to perform preprocessing of previous_application data.
 """
-import time
-from datetime import timedelta
-
 import numpy as np
 import pandas as pd
 
-from .utils import onehot_enc
+from .utils import load_data, onehot_enc
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
@@ -36,7 +33,7 @@ CATEGORIES = [
 
 
 def previous_application():
-    prev = pd.read_parquet(BUCKET + 'auxiliary/previous_application.gz.parquet')
+    prev = load_data(BUCKET + 'auxiliary/previous_application.csv')
     
     # One-hot encoding of categorical features
     prev, cat_cols = onehot_enc(prev, CATEGORICAL_COLS, CATEGORIES)

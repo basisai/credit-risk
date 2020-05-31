@@ -1,13 +1,9 @@
 """
 Script to perform preprocessing of pos_cash data.
 """
-import time
-from datetime import timedelta
-
-import numpy as np
 import pandas as pd
 
-from .utils import onehot_enc
+from .utils import load_data, onehot_enc
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
@@ -20,7 +16,7 @@ CATEGORIES = [
 
 
 def pos_cash():
-    pos = pd.read_parquet(BUCKET + 'auxiliary/POS_CASH_balance.gz.parquet')
+    pos = load_data(BUCKET + 'auxiliary/POS_CASH_balance.csv')
     
     # One-hot encoding of categorical features
     pos, cat_cols = onehot_enc(pos, CATEGORICAL_COLS, CATEGORIES)

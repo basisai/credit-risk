@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .constants import TARGET
-from .utils import onehot_enc
+from .utils import load_data, onehot_enc
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
@@ -43,21 +43,15 @@ CATEGORIES = [
 ]
 
 
-def load_data(execution_date):
-    """Load data."""
-    data_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
-    data_dir = BUCKET + "application/date_partition={}/".format(data_date)
-    df = (
-        pd.read_parquet(data_dir + "applications.gz.parquet", engine='fastparquet')
-        .query("CODE_GENDER != 'XNA'")   # Remove applications with XNA CODE_GENDER 
-    ).compute()
-    return df
-
-
 def application(execution_date):
     """Preprocess applications."""
-    raw_df = load_data(execution_date)
-    
+    data_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
+    file_path = BUCKET + "application/date_partition={}/applications.csv".format(data_date)
+    raw_df = (
+        load_data(file_path)
+        .query("CODE_GENDER != 'XNA'")  # Remove applications with XNA CODE_GENDER
+    )
+
     # Swap target
     raw_df[TARGET] = 1 - raw_df[TARGET]
     

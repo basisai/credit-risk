@@ -1,8 +1,8 @@
 bdrk==0.2.0
-dask[dataframe]==2.5.2
 numpy==1.18.4
 lightgbm==2.3.1
 pandas==1.0.4
+pytz==2020.1
 scikit-learn==0.23.1
 xgboost==1.1.0
 fastparquet==0.4.0

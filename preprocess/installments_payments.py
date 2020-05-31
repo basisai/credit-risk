@@ -1,21 +1,16 @@
 """
 Script to perform preprocessing of installments_payments data.
 """
-import time
-from datetime import timedelta
-
-import numpy as np
 import pandas as pd
 
-from .constants import TARGET
-from .utils import onehot_enc
+from .utils import load_data
 
 BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
 
 
 def installments_payments():
-    ins = pd.read_parquet(BUCKET + 'auxiliary/installments_payments.gz.parquet')
+    ins = load_data(BUCKET + 'auxiliary/installments_payments.csv')
     
     # Percentage and difference paid in each installment (amount paid and installment value)
     ins['PAYMENT_PERC'] = ins['AMT_PAYMENT'] / ins['AMT_INSTALMENT']
