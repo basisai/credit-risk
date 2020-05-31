@@ -39,7 +39,7 @@ train {
             cpu = "4"
             memory = "32G"
         }
-        depends_on = ["generate_features"]
+        depends_on = ["features_trainer"]
     }
 
     parameters {
