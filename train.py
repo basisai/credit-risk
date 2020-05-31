@@ -108,7 +108,7 @@ def trainer(execution_date):
 
     print("Score model")
     start = time.time()
-    selected = np.random.choice(x_train.shape[0], size=20000, replace=False)
+    selected = np.random.choice(x_train.shape[0], size=2000, replace=False)
     features = x_train.iloc[selected]
     inference = clf.predict_proba(features)[:, 1]
 
