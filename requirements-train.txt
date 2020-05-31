@@ -8,3 +8,4 @@ xgboost==1.1.0
 fastparquet==0.4.0
 gcsfs==0.6.2
 google-cloud==0.34.0
+prometheus_client==0.7.1
