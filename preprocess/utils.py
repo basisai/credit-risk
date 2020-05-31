@@ -50,7 +50,7 @@ def onehot_enc(df, categorical_columns, categories):
     enc = OneHotEncoder(categories=categories,
                         sparse=False,
                         handle_unknown='ignore')
-    y = enc.fit_transform(df[categorical_columns])
+    y = enc.fit_transform(df[categorical_columns].fillna("None"))
     
     ohe_cols = [
         f"{col}_{c}" for col, cats in zip(categorical_columns, categories) for c in cats]
