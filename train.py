@@ -85,8 +85,15 @@ def trainer(execution_date):
     print("  Train data shape:", data.shape)
     
     train, valid = train_test_split(data, test_size=0.2, random_state=0)
-    x_train, y_train = train[FEATURES], train[TARGET]
-    x_valid, y_valid = valid[FEATURES], valid[TARGET]
+    x_train = train[FEATURES]
+    y_train = train[TARGET].values
+    x_valid = valid[FEATURES]
+    y_valid = valid[TARGET].values
+
+    # # [LightGBM] [Fatal] Do not support special JSON characters in feature name.
+    # new_cols = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in x_train.columns]
+    # x_train.columns = new_cols
+    # x_valid.columns = new_cols
 
     print("Train model")
     start = time.time()

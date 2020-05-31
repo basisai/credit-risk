@@ -1,7 +1,7 @@
 aif360==0.2.3
 altair==4.1.0
 numpy==1.18.4
-lightgbm==2.3.1
+lightgbm==2.3.0
 pandas==1.0.4
 PyYAML==5.3.1
 scikit-learn==0.23.1
