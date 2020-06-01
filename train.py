@@ -14,7 +14,7 @@ import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
-from preprocess.constants import FEATURES, TARGET
+from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET
 from preprocess.utils import load_data, get_execution_date
 
 TMP_BUCKET = "gs://span-temp-production/"
@@ -26,8 +26,14 @@ MAX_DEPTH = os.getenv("MAX_DEPTH")
 OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 
 
+def get_feats_to_use():
+    if MODEL_VER == "xgboost-pruned" or "lightgbm-pruned":
+        return FEATURES_PRUNED
+    return FEATURES
+
+
 def get_model():
-    if MODEL_VER == "lightgbm":
+    if MODEL_VER == "lightgbm" or MODEL_VER == "lightgbm-pruned":
         return lgb.LGBMClassifier(
             num_leaves=int(NUM_LEAVES),
             max_depth=int(MAX_DEPTH),
@@ -42,7 +48,7 @@ def get_model():
             silent=-1,
             verbose=-1,
         )
-    elif MODEL_VER == "xgboost":
+    elif MODEL_VER == "xgboost" or MODEL_VER == "xgboost-pruned":
         print("  NUM_LEAVES not used for xgboost model")
         return xgb.XGBClassifier(
             max_depth=int(MAX_DEPTH),
@@ -84,11 +90,12 @@ def trainer(execution_date):
     print("Load train data")
     data = load_data(TMP_BUCKET + "credit_train/train.csv")
     print("  Train data shape:", data.shape)
-    
+
+    features = get_feats_to_use()
     train, valid = train_test_split(data, test_size=0.2, random_state=0)
-    x_train = train[FEATURES]
+    x_train = train[features]
     y_train = train[TARGET].values
-    x_valid = valid[FEATURES]
+    x_valid = valid[features]
     y_valid = valid[TARGET].values
 
     # # [LightGBM] [Fatal] Do not support special JSON characters in feature name.
@@ -126,6 +133,10 @@ def trainer(execution_date):
     print("\nSave model")
     with open(OUTPUT_MODEL_PATH, "wb") as model_file:
         pickle.dump(clf, model_file)
+
+    # Save feature names
+    with open('feature_names.pkl', 'wb') as file:
+        pickle.dump(features, file)
 
     # To simulate redis, save to artefact
     from shutil import copyfile
