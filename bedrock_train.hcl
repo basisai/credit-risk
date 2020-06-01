@@ -46,6 +46,7 @@ train {
         EXECUTION_DATE = ""
         MODEL_VER = "lightgbm"
         NUM_LEAVES = "34"
+        MAX_DEPTH = "8"
     }
 }
 

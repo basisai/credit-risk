@@ -22,6 +22,7 @@ TMP_BUCKET = "gs://span-temp-production/"
 
 MODEL_VER = os.getenv("MODEL_VER")
 NUM_LEAVES = int(os.getenv("NUM_LEAVES"))
+MAX_DEPTH = int(os.getenv("MAX_DEPTH"))
 OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 
 
@@ -29,11 +30,11 @@ def get_model():
     if MODEL_VER == "lightgbm":
         return lgb.LGBMClassifier(
             num_leaves=NUM_LEAVES,
+            max_depth=MAX_DEPTH,
             learning_rate=0.02,
             n_estimators=10000,
             colsample_bytree=0.9497036,
             subsample=0.8715623,
-            max_depth=8,
             reg_alpha=0.041545473,
             reg_lambda=0.0735294,
             min_split_gain=0.0222415,
@@ -43,7 +44,7 @@ def get_model():
         )
     elif MODEL_VER == "xgboost":
         return xgb.XGBClassifier(
-            num_leaves=NUM_LEAVES,
+            max_depth=MAX_DEPTH,
             learning_rate=0.02,
             n_estimators=10000,
         )
