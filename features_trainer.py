@@ -57,7 +57,7 @@ def generate_features(execution_date):
 def main():
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
-    generate_features(execution_date)
+    # generate_features(execution_date)
     
 
 if __name__ == "__main__":

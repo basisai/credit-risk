@@ -10,7 +10,7 @@ from bedrock_client.bedrock.metrics.service import ModelMonitoringService
 from flask import Flask, Response, current_app, request
 
 model = pickle.load(open("/artefact/model.pkl", "rb"))
-features = pickle.load(open("/artefact/feature_names.pkl", "rb"))
+feature_cols = pickle.load(open("/artefact/feature_names.pkl", "rb"))
 
 # Simulate redis store
 redis = pd.read_parquet("/artefact/test.gz.parquet")
@@ -22,7 +22,7 @@ def read_redis_features(sk_id):
     row = redis.query(f"SK_ID_CURR == '{sk_id}'")
     if len(row) == 0:
         return None
-    return row[features]
+    return row[feature_cols]
 
 
 def predict_score(request_json):

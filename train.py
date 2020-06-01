@@ -24,6 +24,7 @@ MODEL_VER = os.getenv("MODEL_VER")
 NUM_LEAVES = os.getenv("NUM_LEAVES")
 MAX_DEPTH = os.getenv("MAX_DEPTH")
 OUTPUT_MODEL_PATH = "/artefact/model.pkl"
+FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
 
 def get_feats_to_use():
@@ -91,11 +92,11 @@ def trainer(execution_date):
     data = load_data(TMP_BUCKET + "credit_train/train.csv")
     print("  Train data shape:", data.shape)
 
-    features = get_feats_to_use()
+    feature_cols = get_feats_to_use()
     train, valid = train_test_split(data, test_size=0.2, random_state=0)
-    x_train = train[features]
+    x_train = train[feature_cols]
     y_train = train[TARGET].values
-    x_valid = valid[features]
+    x_valid = valid[feature_cols]
     y_valid = valid[TARGET].values
 
     # # [LightGBM] [Fatal] Do not support special JSON characters in feature name.
@@ -135,8 +136,8 @@ def trainer(execution_date):
         pickle.dump(clf, model_file)
 
     # Save feature names
-    with open('feature_names.pkl', 'wb') as file:
-        pickle.dump(features, file)
+    with open(FEATURE_COLS_PATH, "wb") as file:
+        pickle.dump(feature_cols, file)
 
     # To simulate redis, save to artefact
     from shutil import copyfile
