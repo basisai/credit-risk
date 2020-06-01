@@ -43,6 +43,7 @@ def get_model():
             verbose=-1,
         )
     elif MODEL_VER == "xgboost":
+        print("  NUM_LEAVES not used for xgboost model")
         return xgb.XGBClassifier(
             max_depth=MAX_DEPTH,
             learning_rate=0.02,
@@ -95,7 +96,7 @@ def trainer(execution_date):
     # x_train.columns = new_cols
     # x_valid.columns = new_cols
 
-    print("Train model")
+    print("\nTrain model")
     start = time.time()
     clf = get_model()
     clf.fit(x_train,
@@ -106,7 +107,7 @@ def trainer(execution_date):
             early_stopping_rounds=200)
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
-    print("Score model")
+    print("\nScore model")
     start = time.time()
     selected = np.random.choice(x_train.shape[0], size=2000, replace=False)
     features = x_train.iloc[selected]
@@ -119,12 +120,12 @@ def trainer(execution_date):
     )
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
-    print("Save model")
+    print("\nEvaluate")
+    compute_log_metrics(clf, x_valid, y_valid)
+
+    print("\nSave model")
     with open(OUTPUT_MODEL_PATH, "wb") as model_file:
         pickle.dump(clf, model_file)
-
-    print("Evaluate")
-    compute_log_metrics(clf, x_valid, y_valid)
 
     # To simulate redis, save to artefact
     from shutil import copyfile

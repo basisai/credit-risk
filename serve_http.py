@@ -32,8 +32,8 @@ def predict_score(request_json):
     sk_id = request_json["sk_id"]
     row_feats = read_redis_features(sk_id)
 
+    # Score
     if row_feats is not None:
-        # Score
         prob = (
             model
             .predict_proba(np.array(row_feats).reshape(1, -1))[:, 1]
