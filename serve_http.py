@@ -23,7 +23,7 @@ def read_redis_features(sk_id):
     row = redis.query(f"SK_ID_CURR == '{sk_id}'")
     if len(row) == 0:
         return None
-    return row[FEATURES]
+    return row[FEATURES].values
 
 
 def predict_score(request_json):
