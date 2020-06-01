@@ -10,7 +10,7 @@ from bedrock_client.bedrock.metrics.service import ModelMonitoringService
 from flask import Flask, Response, current_app, request
 
 model = pickle.load(open("/artefact/model.pkl", "rb"))
-feature_cols = pickle.load(open("/artefact/feature_names.pkl", "rb"))
+feature_cols = pickle.load(open("/artefact/feature_cols.pkl", "rb"))
 
 # Simulate redis store
 redis = pd.read_parquet("/artefact/test.gz.parquet")
