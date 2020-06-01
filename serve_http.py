@@ -14,7 +14,7 @@ from preprocess.constants import FEATURES
 model = pickle.load(open("/artefact/model.pkl", "rb"))
 
 # Simulate redis store
-redis = pd.read_parquet("output/test.gz.parquet")
+redis = pd.read_parquet("/artefact/test.gz.parquet")
 
 
 def read_redis_features(sk_id):

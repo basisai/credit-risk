@@ -126,6 +126,10 @@ def trainer(execution_date):
     print("Evaluate")
     compute_log_metrics(clf, x_valid, y_valid)
 
+    # To simulate redis, save to artefact
+    from shutil import copyfile
+    copyfile("output/test.gz.parquet", "/artefact/test.gz.parquet")
+
 
 def main():
     execution_date = get_execution_date()

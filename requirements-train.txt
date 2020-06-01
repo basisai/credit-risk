@@ -1,11 +1,11 @@
 bdrk[model-monitoring]==0.2.1
 numpy==1.18.4
 lightgbm==2.3.0
-pandas==1.0.4
+pandas==1.0.3
 pytz==2020.1
 scikit-learn==0.23.1
 xgboost==1.1.0
-fastparquet==0.4.0
+fastparquet==0.3.2
 gcsfs==0.6.2
 google-cloud==0.34.0
 prometheus_client==0.7.1
