@@ -23,7 +23,7 @@ def read_redis_features(sk_id):
     row = redis.query(f"SK_ID_CURR == '{sk_id}'")
     if len(row) == 0:
         return None
-    return row[FEATURES].values[0]
+    return row[FEATURES]
 
 
 def predict_score(request_json):
@@ -34,17 +34,13 @@ def predict_score(request_json):
 
     # Score
     if row_feats is not None:
-        prob = (
-            model
-            .predict_proba(np.array(row_feats).reshape(1, -1))[:, 1]
-            .item()
-        )
+        prob = model.predict_proba(row_feats)[:, 1].item()
 
         # Log the prediction
         current_app.monitor.log_prediction(
             request_body=json.dumps(request_json),
-            features=row_feats,
-            output=prob
+            features=row_feats.values[0],
+            output=prob,
         )
         return prob
 
