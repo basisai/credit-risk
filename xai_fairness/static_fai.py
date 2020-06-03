@@ -5,62 +5,17 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import streamlit as st
-from aif360.metrics.classification_metric import ClassificationMetric
 
 from .toolkit import (
-    prepare_dataset,
-    compute_fairness_metrics,
+    get_aif_metric,
+    compute_fairness_measures,
     get_perf_measure_by_group,
     color_red,
 )
 
 
-def get_fmeasures(x_val,
-                  y_val,
-                  y_pred,
-                  protected_attribute,
-                  privileged_attribute_values,
-                  unprivileged_attribute_values,
-                  favorable_label=1.,
-                  unfavorable_label=0.,
-                  fthresh=0.2,
-                  fairness_metrics=None):
-    grdtruth = prepare_dataset(
-        x_val,
-        y_val,
-        protected_attribute,
-        privileged_attribute_values,
-        unprivileged_attribute_values,
-        favorable_label=favorable_label,
-        unfavorable_label=unfavorable_label,
-    )
-    
-    predicted = prepare_dataset(
-        x_val,
-        y_pred,
-        protected_attribute,
-        privileged_attribute_values,
-        unprivileged_attribute_values,
-        favorable_label=favorable_label,
-        unfavorable_label=unfavorable_label,
-    )
-    
-    model_metric = ClassificationMetric(
-        grdtruth,
-        predicted,
-        unprivileged_groups=[{protected_attribute: v} for v in unprivileged_attribute_values],
-        privileged_groups=[{protected_attribute: v} for v in privileged_attribute_values],
-    )
-    
-    fmeasures = compute_fairness_metrics(model_metric)
-    if fairness_metrics is not None:
-        fmeasures = fmeasures[fmeasures["Metric"].isin(fairness_metrics)]
-    fmeasures["Fair?"] = fmeasures["Ratio"].apply(
-        lambda x: "Yes" if np.abs(x - 1) < fthresh else "No")
-    return fmeasures, model_metric
-
-
 def plot_hist(source, cutoff):
+    """Plot custom histogram."""
     source["Cutoff"] = cutoff
     var = source.columns[0]
     base = alt.Chart(source)
@@ -84,12 +39,13 @@ def plot_hist(source, cutoff):
 
 
 def plot_fmeasures_bar(df, threshold):
+    """Plot custom bar chart."""
     source = df.copy()
     source["lbd"] = 1 - threshold
     source["ubd"] = 1 + threshold
 
     base = alt.Chart(source)
-    bar = base.mark_bar().encode(
+    bars = base.mark_bar().encode(
         alt.X("Ratio:Q"),
         alt.Y("Metric:O"),
         alt.Color("Fair?:N", scale=alt.Scale(
@@ -104,16 +60,27 @@ def plot_fmeasures_bar(df, threshold):
         alt.X("ubd:Q", title="Ratio"),
         size=alt.value(2),
     )
-    return bar + rule1 + rule2
+    return bars + rule1 + rule2
 
 
-def alg_fai_summary(x_valid, unique_classes, true_class, pred_class, config_fai, config):
-    fthresh = config["fairness_threshold"]
-    st.write("Algorithmic fairness assesses the models based on two technical definitions of fairness. "
+def custom_fmeasures(aif_metric, threshold=0.2, fairness_metrics=None):
+    """To customise fairness measures dataframe."""
+    fmeasures = compute_fairness_measures(aif_metric)
+    if fairness_metrics is not None:
+        fmeasures = fmeasures[fmeasures["Metric"].isin(fairness_metrics)]
+    fmeasures["Fair?"] = fmeasures["Ratio"].apply(
+        lambda x: "Yes" if np.abs(x - 1) < threshold else "No")
+    return fmeasures
+
+
+def alg_fai_summary(valid, unique_classes, true_class, pred_class, config_fai, config):
+    """Fairness summary."""
+    threshold = config["fairness_threshold"]
+    st.write("Algorithmic fairness assesses the models based on technical definitions of fairness. "
              "If all are met, the model is deemed to be fair.")
-    st.write(f"Fairness deviation threshold is set at **{fthresh}**. "
+    st.write(f"Fairness deviation threshold is set at **{threshold}**. "
              "Absolute fairness is 1, so a model is considered fair for the metric when the "
-             f"**metric is between {1 - fthresh:.2f} and {1 + fthresh:.2f}**.")
+             f"**metric is between {1 - threshold:.2f} and {1 + threshold:.2f}**.")
 
     final_fairness = []
     for attr, attr_values in config_fai.items():
@@ -124,20 +91,25 @@ def alg_fai_summary(x_valid, unique_classes, true_class, pred_class, config_fai,
             _pred_class = (pred_class == fcl).astype(int)
 
             # Compute fairness measures
-            fmeasures, _ = get_fmeasures(x_valid,
-                                         _true_class,
-                                         _pred_class,
-                                         attr,
-                                         attr_values["privileged_attribute_values"],
-                                         attr_values["unprivileged_attribute_values"],
-                                         fthresh=config["fairness_threshold"],
-                                         fairness_metrics=config["fairness_metrics"])
+            aif_metric = get_aif_metric(
+                valid,
+                _true_class,
+                _pred_class,
+                attr,
+                attr_values["privileged_attribute_values"],
+                attr_values["unprivileged_attribute_values"],
+            )
+            fmeasures = custom_fmeasures(
+                aif_metric,
+                threshold=config["fairness_threshold"],
+                fairness_metrics=config["fairness_metrics"],
+            )
 
             if len(unique_classes) > 2:
                 st.subheader(f"Fairness Class `{fcl}` vs rest")
             st.dataframe(
                 fmeasures[["Metric", "Ratio", "Fair?"]]
-                    .style.applymap(color_red, subset=["Fair?"])
+                .style.applymap(color_red, subset=["Fair?"])
             )
             st.altair_chart(plot_fmeasures_bar(fmeasures, config["fairness_threshold"]),
                             use_container_width=True)
@@ -153,6 +125,7 @@ def alg_fai_summary(x_valid, unique_classes, true_class, pred_class, config_fai,
 
 
 def get_confusion_matrix_chart(cm, title):
+    """Plot custom confusion matrix chart."""
     source = pd.DataFrame([[0, 0, cm['TN']],
                            [0, 1, cm['FP']],
                            [1, 0, cm['FN']],
@@ -182,10 +155,10 @@ def get_confusion_matrix_chart(cm, title):
     return rects + text
 
 
-def alg_fai(fmeasures, model_metric, fthresh):
-    st.write(f"Fairness is when **ratio is between {1-fthresh:.2f} and {1+fthresh:.2f}**.")
+def alg_fai(fmeasures, aif_metric, threshold):
+    st.write(f"Fairness is when **ratio is between {1-threshold:.2f} and {1+threshold:.2f}**.")
 
-    chart = plot_fmeasures_bar(fmeasures, fthresh)
+    chart = plot_fmeasures_bar(fmeasures, threshold)
     st.altair_chart(chart, use_container_width=True)
 
     st.dataframe(
@@ -199,7 +172,7 @@ def alg_fai(fmeasures, model_metric, fthresh):
             'TPR', 'TNR', 'FPR', 'FNR', 'PPV', 'NPV', 'FDR', 'FOR', 'ACC',
             'selection_rate', 'precision', 'recall', 'sensitivity',
             'specificity', 'power', 'error_rate']:
-        df = get_perf_measure_by_group(model_metric, metric_name)
+        df = get_perf_measure_by_group(aif_metric, metric_name)
         c = alt.Chart(df).mark_bar().encode(
             x=f"{metric_name}:Q",
             y="Group:O",
@@ -211,17 +184,17 @@ def alg_fai(fmeasures, model_metric, fthresh):
     st.altair_chart(all_charts, use_container_width=False)
 
     st.write("**Confusion Matrices**")
-    cm1 = model_metric.binary_confusion_matrix(privileged=None)
+    cm1 = aif_metric.binary_confusion_matrix(privileged=None)
     c1 = get_confusion_matrix_chart(cm1, "All")
     st.altair_chart(alt.concat(c1, columns=2), use_container_width=False)
-    cm2 = model_metric.binary_confusion_matrix(privileged=True)
+    cm2 = aif_metric.binary_confusion_matrix(privileged=True)
     c2 = get_confusion_matrix_chart(cm2, "Privileged")
-    cm3 = model_metric.binary_confusion_matrix(privileged=False)
+    cm3 = aif_metric.binary_confusion_matrix(privileged=False)
     c3 = get_confusion_matrix_chart(cm3, "Unprivileged")
     st.altair_chart(c2 | c3, use_container_width=False)
 
 
-def alg_fai_appendix(x_valid, unique_classes, true_class, pred_class, config_fai, config):
+def alg_fai_appendix(valid, unique_classes, true_class, pred_class, config_fai, config):
     for attr, attr_values in config_fai.items():
         st.subheader(f"Prohibited Feature: `{attr}`")
         for fcl in unique_classes:
@@ -229,15 +202,20 @@ def alg_fai_appendix(x_valid, unique_classes, true_class, pred_class, config_fai
             _pred_class = (pred_class == fcl).astype(int)
 
             # Compute fairness measures
-            fmeasures, model_metric = get_fmeasures(x_valid,
-                                                    _true_class,
-                                                    _pred_class,
-                                                    attr,
-                                                    attr_values["privileged_attribute_values"],
-                                                    attr_values["unprivileged_attribute_values"],
-                                                    fthresh=config["fairness_threshold"],
-                                                    fairness_metrics=config["fairness_metrics"])
+            aif_metric = get_aif_metric(
+                valid,
+                _true_class,
+                _pred_class,
+                attr,
+                attr_values["privileged_attribute_values"],
+                attr_values["unprivileged_attribute_values"],
+            )
+            fmeasures = custom_fmeasures(
+                aif_metric,
+                threshold=config["fairness_threshold"],
+                fairness_metrics=config["fairness_metrics"],
+            )
 
             if len(unique_classes) > 2:
                 st.subheader(f"Fairness Class `{fcl}` vs rest")
-            alg_fai(fmeasures, model_metric, config["fairness_threshold"])
+            alg_fai(fmeasures, aif_metric, config["fairness_threshold"])

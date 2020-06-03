@@ -28,7 +28,7 @@ def pdp_chart(pdp_isolate_out, feature_name):
         "feature": pdp_isolate_out.feature_grids,
         "value": pdp_isolate_out.pdp,
     })
-    
+
     if pdp_isolate_out.feature_type == "numeric":
         chart = alt.Chart(source).mark_line().encode(
             x=alt.X("feature", title=feature_name),
@@ -224,7 +224,7 @@ def waterfall_chart(source, decimal=3):
 
     bars = alt.Chart(source).mark_bar().encode(
         alt.X("feature:O", sort=source["feature"].tolist()),
-        alt.Y("open:Q", title="", scale=alt.Scale(zero=False)),
+        alt.Y("open:Q", scale=alt.Scale(zero=False)),
         alt.Y2("close:Q"),
         alt.Tooltip(["feature", "feature_value", "shap_value"]),
     )
@@ -258,9 +258,10 @@ def indiv_xai(instance, base_value, shap_values, title="", max_display=10):
     source = make_source_waterfall(instance, base_value, shap_values, max_display=max_display)
     chart = waterfall_chart(source)
     chart = chart.properties(
+        height=400,
         title=title,
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=False)
 
 
 def indiv_xai_appendix(x_valid, sample_idx, shap_values, base_value, config):
