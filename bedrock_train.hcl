@@ -2,6 +2,7 @@ version = "1.0"
 
 train {
     step preproc_agg {
+        image = "basisai/workload-standard:v0.1.2"
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
