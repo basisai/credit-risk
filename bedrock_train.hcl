@@ -6,6 +6,7 @@ train {
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
+            "zip -r preprocess.zip preprocess/",
         ]
         script = [{sh = ["python3 tasks/preproc_agg.py"]}]
         resources {
@@ -19,6 +20,7 @@ train {
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
+            "zip -r preprocess.zip preprocess/",
         ]
         script = [{sh = ["python3 tasks/features_trainer.py"]}]
         resources {
@@ -33,6 +35,7 @@ train {
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
+            "zip -r preprocess.zip preprocess/",
         ]
         script = [{sh = ["python3 tasks/train.py"]}]
         resources {
