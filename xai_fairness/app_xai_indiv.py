@@ -5,6 +5,7 @@ from app_utils import load_model, load_data
 from preprocess.constants import FEATURES, TARGET
 from .static_xai import make_source_waterfall, waterfall_chart
 
+
 @st.cache
 def get_sk_ids(series):
     return series.tolist()

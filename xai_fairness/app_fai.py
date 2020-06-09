@@ -13,7 +13,7 @@ from .static_fai import (
     plot_fmeasures_bar,
     color_red,
 )
-from .toolkit import prepare_dataset, get_perf_measure_by_group
+from .toolkit import get_perf_measure_by_group
 
 METRICS_TO_USE = ["Equal opportunity", "Predictive parity", "Statistical parity"]
 
@@ -193,13 +193,6 @@ def compare():
 
         st.write(m)
         st.altair_chart(plot_fmeasures_bar(source, fthresh), use_container_width=True)
-
-#     st.altair_chart(chart_cm_comparison(orig_clf_metric, clf_metric, None, "All"),
-#                     use_container_width=False)
-#     st.altair_chart(chart_cm_comparison(orig_clf_metric, clf_metric, True, "Privileged"),
-#                     use_container_width=False)
-#     st.altair_chart(chart_cm_comparison(orig_clf_metric, clf_metric, False, "Unprivileged"),
-#                     use_container_width=False)
 
     
 if __name__ == "__main__":

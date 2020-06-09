@@ -73,7 +73,7 @@ def custom_fmeasures(aif_metric, threshold=0.2, fairness_metrics=None):
     return fmeasures
 
 
-def alg_fai_summary(valid, unique_classes, true_class, pred_class, config_fai, config):
+def alg_fai_summary(valid, unq_fai_classes, true_class, pred_class, config_fai, config):
     """Fairness summary."""
     threshold = config["fairness_threshold"]
     st.write("Algorithmic fairness assesses the models based on technical definitions of fairness. "
@@ -86,7 +86,7 @@ def alg_fai_summary(valid, unique_classes, true_class, pred_class, config_fai, c
     for attr, attr_values in config_fai.items():
         st.subheader(f"Prohibited Feature: `{attr}`")
 
-        for fcl in unique_classes:
+        for fcl in unq_fai_classes:
             _true_class = (true_class == fcl).astype(int)
             _pred_class = (pred_class == fcl).astype(int)
 
@@ -105,8 +105,8 @@ def alg_fai_summary(valid, unique_classes, true_class, pred_class, config_fai, c
                 fairness_metrics=config["fairness_metrics"],
             )
 
-            if len(unique_classes) > 2:
-                st.subheader(f"Fairness Class `{fcl}` vs rest")
+            if len(unq_fai_classes) > 2:
+                st.write(f"**Fairness Class `{attr}={fcl}` vs rest**")
             st.dataframe(
                 fmeasures[["Metric", "Ratio", "Fair?"]]
                 .style.applymap(color_red, subset=["Fair?"])
@@ -117,7 +117,7 @@ def alg_fai_summary(valid, unique_classes, true_class, pred_class, config_fai, c
                 st.write("Overall: **Fair**")
                 final_fairness.append([f"{attr}-class{fcl}", "Yes"])
             else:
-                st.write("Overall: **Not fair**")
+                st.write("Overall: **Not Fair**")
                 final_fairness.append([f"{attr}-class{fcl}", "No"])
 
     final_fairness = pd.DataFrame(final_fairness, columns=["Prohibited Variable", "Fair?"])
@@ -194,10 +194,10 @@ def alg_fai(fmeasures, aif_metric, threshold):
     st.altair_chart(c2 | c3, use_container_width=False)
 
 
-def alg_fai_appendix(valid, unique_classes, true_class, pred_class, config_fai, config):
+def alg_fai_appendix(valid, unq_fai_classes, true_class, pred_class, config_fai, config):
     for attr, attr_values in config_fai.items():
         st.subheader(f"Prohibited Feature: `{attr}`")
-        for fcl in unique_classes:
+        for fcl in unq_fai_classes:
             _true_class = (true_class == fcl).astype(int)
             _pred_class = (pred_class == fcl).astype(int)
 
@@ -216,6 +216,6 @@ def alg_fai_appendix(valid, unique_classes, true_class, pred_class, config_fai, 
                 fairness_metrics=config["fairness_metrics"],
             )
 
-            if len(unique_classes) > 2:
-                st.subheader(f"Fairness Class `{fcl}` vs rest")
+            if len(unq_fai_classes) > 2:
+                st.write(f"**Fairness Class `{attr}={fcl}` vs rest**")
             alg_fai(fmeasures, aif_metric, config["fairness_threshold"])

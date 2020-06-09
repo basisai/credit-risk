@@ -13,9 +13,9 @@ BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
 
 BINARY_MAP = {
-    'CODE_GENDER': ['M', 'F'],
+    'CODE_GENDER': ['F', 'M'],
     'FLAG_OWN_CAR': ['N', 'Y'],
-    'FLAG_OWN_REALTY': ['Y', 'N'],
+    'FLAG_OWN_REALTY': ['N', 'Y'],
 }
 
 CATEGORICAL_COLS = [
@@ -52,8 +52,8 @@ def application(execution_date):
         .query("CODE_GENDER != 'XNA'")  # Remove applications with XNA CODE_GENDER
     )
 
-    # Swap target
-    raw_df[TARGET] = 1 - raw_df[TARGET]
+    # # Swap target
+    # raw_df[TARGET] = 1 - raw_df[TARGET]
     
     # Binarize
     for col, val in BINARY_MAP.items():

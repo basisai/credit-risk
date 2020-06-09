@@ -10,8 +10,6 @@ from aif360.metrics.classification_metric import ClassificationMetric
 from pdpbox import pdp, info_plots
 from IPython.display import display
 
-plt.style.use('seaborn-darkgrid')
-
 
 def pdp_plot(model,
              dataset,

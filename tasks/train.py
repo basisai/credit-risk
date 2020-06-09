@@ -28,7 +28,7 @@ FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
 
 def get_feats_to_use():
-    if MODEL_VER == "xgboost-pruned" or "lightgbm-pruned":
+    if MODEL_VER == "xgboost-pruned" or MODEL_VER == "lightgbm-pruned":
         return FEATURES_PRUNED
     return FEATURES
 
