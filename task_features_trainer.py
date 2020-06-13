@@ -49,6 +49,10 @@ def generate_features(execution_date):
         print("  Credit card balance df shape:", cc.shape)
         df = df.join(cc, how='left', on='SK_ID_CURR')
 
+    # [LightGBM] [Fatal] Do not support special JSON characters in feature name.
+    new_cols = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in df.columns]
+    df.columns = new_cols
+    
     print("\nSave train data")
     print("  Train data shape:", df.shape)
     df.to_csv(TMP_BUCKET + "credit_train/train.csv", index=False)

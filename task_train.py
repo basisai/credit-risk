@@ -28,7 +28,7 @@ FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
 
 def get_feats_to_use():
-    if MODEL_VER == "xgboost-pruned" or "lightgbm-pruned":
+    if MODEL_VER == "xgboost-pruned" or MODEL_VER == "lightgbm-pruned":
         return FEATURES_PRUNED
     return FEATURES
 
@@ -84,6 +84,8 @@ def compute_log_metrics(clf, x_val, y_val):
     bedrock.log_metric("Accuracy", acc)
     bedrock.log_metric("ROC AUC", roc_auc)
     bedrock.log_metric("Avg precision", avg_prc)
+    bedrock.log_chart_data(y_val.astype(int).tolist(),
+                           y_prob.flatten().tolist())
 
 
 def trainer(execution_date):
@@ -98,11 +100,6 @@ def trainer(execution_date):
     y_train = train[TARGET].values
     x_valid = valid[feature_cols]
     y_valid = valid[TARGET].values
-
-    # # [LightGBM] [Fatal] Do not support special JSON characters in feature name.
-    # new_cols = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in x_train.columns]
-    # x_train.columns = new_cols
-    # x_valid.columns = new_cols
 
     print("\nTrain model")
     start = time.time()

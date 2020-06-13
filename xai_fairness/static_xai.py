@@ -10,6 +10,20 @@ import matplotlib.pyplot as plt
 from pdpbox import pdp
 
 
+def convert_name(ind, feature_names):
+    """Get index of feature name if it is given."""
+    if isinstance(ind, str):
+        return np.where(np.array(feature_names) == ind)[0][0]
+    return ind
+
+
+def is_numeric(series, max_unique=16):
+    """Flag if series is numeric."""
+    if len(set(series.values[:3000])) > max_unique:
+        return True
+    return False
+
+
 @st.cache(allow_output_mutation=True)
 def compute_pdp_isolate(model, dataset, model_features, feature):
     pdp_isolate_out = pdp.pdp_isolate(
@@ -89,17 +103,17 @@ def get_top_features(shap_values, features, max_display):
     return output_df.iloc[:max_display]
 
 
-def compute_corrcoef(df, x_sample, pred_sample):
+def compute_corrcoef(df, x_valid, y_score):
     output_df = df.copy()
     corrcoef = []
     for col in output_df["feature"].values:
-        df_ = pd.DataFrame({"x": x_sample[col], "y": pred_sample})
+        df_ = pd.DataFrame({"x": x_valid[col].values, "y": y_score})
         corrcoef.append(df_.corr(method='pearson').values[0, 1])
     output_df["corrcoef"] = corrcoef
     return output_df
 
 
-def xai_charts(corr_df, x_sample, shap_values, feature_names, max_display):
+def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
     st.write("**SHAP Summary Plots of Top Features**")
 
     source = corr_df.copy()
@@ -113,8 +127,9 @@ def xai_charts(corr_df, x_sample, shap_values, feature_names, max_display):
     )
     st.altair_chart(chart, use_container_width=True)
 
+    # TODO: convert to altair chart
     shap.summary_plot(shap_values,
-                      x_sample,
+                      x_valid,
                       feature_names=feature_names,
                       max_display=max_display,
                       plot_size=[12, 6],
@@ -151,34 +166,72 @@ def model_xai_summary(x_valid, y_score, shap_values, feature_names, config, is_m
     return top_features, corr_df
 
 
-def model_xai_appendix(model, x_sample, top_features, feature_names, category_map):
-    st.write("**Partial Dependence Plots of Top Features**")
-    # PDPbox does not allow NaNs
-    _x_sample = x_sample.fillna(0)
-    rev_cat_map = {e: k for k, v in category_map.items() for e in v}
-    _top_features = []
-    for feat in top_features:
-        if feat in rev_cat_map.keys() and rev_cat_map[feat] not in _top_features:
-            _top_features.append(rev_cat_map[feat])
-        else:
-            _top_features.append(feat)
+def make_source_dp(shap_values, features, feature_names, feature):
+    ind = convert_name(feature, feature_names)
 
-    for feat_name in _top_features:
-        st.write(f"Feature: `{feat_name}`")
-        feature = category_map.get(feat_name) or feat_name
-        pdp_isolate_out = compute_pdp_isolate(model, _x_sample, feature_names, feature)
+    # randomize the ordering so plotting overlaps are not related to data ordering
+    oinds = np.arange(shap_values.shape[0])
+    np.random.shuffle(oinds)
 
-        if not isinstance(pdp_isolate_out, list):
-            pdp_isolate_out = [pdp_isolate_out]
+    return pd.DataFrame({
+        feature: features[oinds, ind],
+        "value": shap_values[oinds, ind],
+    })
 
-        for i, pdp_out in enumerate(pdp_isolate_out):
+
+def dependence_chart(source, feat_col, val_col="value"):
+    if is_numeric(source[feat_col]):
+        scatterplot = alt.Chart(source).mark_circle(size=8).encode(
+            x=alt.X(f"{feat_col}:Q"),
+            y=alt.Y(f"{val_col}:Q", title="SHAP value"),
+        )
+        return scatterplot
+
+    stripplot = alt.Chart(source, width=40).mark_circle(size=8).encode(
+        x=alt.X(
+            'jitter:Q',
+            title=None,
+            axis=alt.Axis(values=[0], ticks=True, grid=False, labels=False),
+            scale=alt.Scale(),
+        ),
+        y=alt.Y(f'{val_col}:Q', title="SHAP value"),
+        color=alt.Color(f'{feat_col}:N', legend=None),
+        column=alt.Column(
+            f'{feat_col}:N',
+            header=alt.Header(
+                labelAngle=-90,
+                titleOrient='top',
+                labelOrient='bottom',
+                labelAlign='right',
+                labelPadding=3,
+            ),
+        ),
+    ).transform_calculate(
+        # Generate Gaussian jitter with a Box-Muller transform
+        jitter='sqrt(-2*log(random()))*cos(2*PI*random())'
+    ).configure_facet(
+        spacing=0
+    ).configure_view(
+        stroke=None
+    )
+    return stripplot
+
+
+def model_xai_appendix(shap_values, x_valid, feature_names, top_features):
+    features = x_valid.values
+
+    for feat_name in top_features:
+        st.subheader(f"Feature: `{feat_name}`")
+        for lb, shap_val in enumerate(shap_values):
             title = ""
-            if len(pdp_isolate_out) > 1:
-                title = f"Target Class {i}"
-            chart = pdp_chart(pdp_out, feat_name).properties(
-                title=title,
+            if len(shap_values) > 1:
+                title = f"Target Class {lb}"
+
+            source = make_source_dp(shap_val, features, feature_names, feat_name)
+            st.altair_chart(
+                dependence_chart(source, feat_name).properties(title=title),
+                use_container_width=False,
             )
-            st.altair_chart(chart, use_container_width=False)
 
 
 def make_source_waterfall(instance, base_value, shap_values, max_display=10):

@@ -7,7 +7,7 @@ train {
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
         ]
-        script = [{sh = ["python3 preproc_agg.py"]}]
+        script = [{sh = ["python3 task_preproc_agg.py"]}]
         resources {
             cpu = "0.5"
             memory = "1G"
@@ -20,7 +20,7 @@ train {
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
         ]
-        script = [{sh = ["python3 features_fs.py"]}]
+        script = [{sh = ["python3 task_features_fs.py"]}]
         resources {
             cpu = "0.5"
             memory = "1G"

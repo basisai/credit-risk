@@ -1,6 +1,5 @@
 import json
 
-# For explainability AI app
 # List numeric and categorical features
 NUMERIC_FEATS = json.load(open("preprocess/numeric_feats.txt"))
 
@@ -16,13 +15,16 @@ for f in CATEGORICAL_FEATS:
 # Train & validation features and target
 FEATURES = OHE_CAT_FEATS + NUMERIC_FEATS
 
+# [LightGBM] [Fatal] Do not support special JSON characters in feature name.
+FEATURES = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in FEATURES]
+
 TARGET = 'TARGET'
 
 # Pruned features
 FEATURES_PRUNED = [
     'EXT_SOURCE_2', 'EXT_SOURCE_3', 'EXT_SOURCE_1', 'APPROVED_CNT_PAYMENT_MEAN',
     'AMT_ANNUITY', 'PAYMENT_RATE', 'DAYS_EMPLOYED', 'OWN_CAR_AGE', 'DAYS_BIRTH',
-    'NAME_FAMILY_STATUS_Married', 'AMT_GOODS_PRICE', 'NAME_EDUCATION_TYPE_Higher education',
+    'NAME_FAMILY_STATUS_Married', 'AMT_GOODS_PRICE', 'NAME_EDUCATION_TYPE_Higher_education',
     'INSTAL_DPD_MEAN', 'PREV_CNT_PAYMENT_MEAN', 'INSTAL_AMT_PAYMENT_SUM', 'ANNUITY_INCOME_PERC',
     'AMT_CREDIT', 'PREV_APP_CREDIT_PERC_MEAN', 'FLAG_PHONE', 'CLOSED_DAYS_CREDIT_ENDDATE_MAX',
     'FLAG_DOCUMENT_3', 'INSTAL_DAYS_ENTRY_PAYMENT_SUM', 'APPROVED_AMT_DOWN_PAYMENT_MAX',
@@ -40,12 +42,10 @@ FEATURES_PRUNED = [
 ]
 
 
-# For fairness AI app
-# List bias and privileged info
 CONFIG_FAI = {
     'CODE_GENDER': {
-        'unprivileged_attribute_values': [1],
-        'privileged_attribute_values': [0],
+        'unprivileged_attribute_values': [0],
+        'privileged_attribute_values': [1],
     },
     'NAME_EDUCATION_TYPE_Higher education': {
         'unprivileged_attribute_values': [0],
