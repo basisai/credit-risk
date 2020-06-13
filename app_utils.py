@@ -9,7 +9,7 @@ def load_model(filename):
     return pickle.load(open(filename, "rb"))
 
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def load_data(filename, num_rows=None):
     df = pd.read_parquet(filename)
     if num_rows is not None:

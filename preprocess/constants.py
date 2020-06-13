@@ -47,7 +47,7 @@ CONFIG_FAI = {
         'unprivileged_attribute_values': [0],
         'privileged_attribute_values': [1],
     },
-    'NAME_EDUCATION_TYPE_Higher education': {
+    'NAME_EDUCATION_TYPE_Higher_education': {
         'unprivileged_attribute_values': [0],
         'privileged_attribute_values': [1],
     },
