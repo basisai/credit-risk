@@ -14,6 +14,11 @@ from .toolkit import (
 )
 
 
+def binarize(y, label):
+    """Binarize array-like data according to label."""
+    return (np.array(y) == label).astype(int)
+
+
 def plot_hist(source, cutoff):
     """Plot custom histogram."""
     source["Cutoff"] = cutoff
@@ -87,14 +92,11 @@ def alg_fai_summary(valid, unq_fai_classes, true_class, pred_class, config_fai, 
         st.subheader(f"Prohibited Feature: `{attr}`")
 
         for fcl in unq_fai_classes:
-            _true_class = (true_class == fcl).astype(int)
-            _pred_class = (pred_class == fcl).astype(int)
-
             # Compute fairness measures
             aif_metric = get_aif_metric(
                 valid,
-                _true_class,
-                _pred_class,
+                binarize(true_class, fcl),
+                binarize(pred_class, fcl),
                 attr,
                 attr_values["privileged_attribute_values"],
                 attr_values["unprivileged_attribute_values"],
@@ -198,14 +200,11 @@ def alg_fai_appendix(valid, unq_fai_classes, true_class, pred_class, config_fai,
     for attr, attr_values in config_fai.items():
         st.subheader(f"Prohibited Feature: `{attr}`")
         for fcl in unq_fai_classes:
-            _true_class = (true_class == fcl).astype(int)
-            _pred_class = (pred_class == fcl).astype(int)
-
             # Compute fairness measures
             aif_metric = get_aif_metric(
                 valid,
-                _true_class,
-                _pred_class,
+                binarize(true_class, fcl),
+                binarize(pred_class, fcl),
                 attr,
                 attr_values["privileged_attribute_values"],
                 attr_values["unprivileged_attribute_values"],

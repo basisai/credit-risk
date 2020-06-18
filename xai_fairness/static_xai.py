@@ -94,13 +94,15 @@ def pdp_heatmap(pdp_interact_out, feature_names):
     return chart
 
 
-def get_top_features(shap_values, features, max_display):
-    output_df = pd.DataFrame({
+def get_top_features(shap_values, features, max_display=None):
+    top_shap_df = pd.DataFrame({
         "feature": features,
-        "value": np.abs(shap_values).mean(axis=0).mean(axis=0),
+        "value": np.abs(shap_values).mean(axis=0),
     })
-    output_df.sort_values("value", ascending=False, inplace=True, ignore_index=True)
-    return output_df.iloc[:max_display]
+    top_shap_df.sort_values("value", ascending=False, inplace=True, ignore_index=True)
+    if max_display is None:
+        return top_shap_df
+    return top_shap_df.iloc[:max_display]
 
 
 def compute_corrcoef(df, x_valid, y_score):
@@ -138,31 +140,37 @@ def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
     st.pyplot()
 
 
-def model_xai_summary(x_valid, y_score, shap_values, feature_names, config, is_multiclass):
-    # Get top features by shap_values
-    output_df = get_top_features(shap_values, feature_names, config["num_top_features"])
-    top_features = output_df["feature"].tolist()
-
+def model_xai_summary(x_valid, y_score, all_shap_values, feature_names, config, is_multiclass):
     if is_multiclass:
-        for lb, shap_val in enumerate(shap_values):
+        overall_top_df = pd.DataFrame({"feature": feature_names})
+        for lb, shap_values in enumerate(all_shap_values):
             st.subheader(f"Target Class `{lb}`")
-            corr_df = compute_corrcoef(output_df, x_valid, y_score[:, lb])
+            top_shap_df = get_top_features(shap_values, feature_names)
+            overall_top_df = pd.merge(overall_top_df, top_shap_df, on="feature")
+            corr_df = compute_corrcoef(top_shap_df.iloc[:config["num_top_features"]],
+                                       x_valid, y_score[:, lb])
             xai_charts(corr_df,
                        x_valid,
-                       shap_val,
+                       shap_values,
                        feature_names,
                        config["num_top_features"])
-        corr_df = None  # For multiclass case, no output for corr_df
-    else:
-        corr_df = compute_corrcoef(output_df, x_valid, y_score)
-        xai_charts(corr_df,
-                   x_valid,
-                   shap_values[0],
-                   feature_names,
-                   config["num_top_features"])
 
-    feats_ = output_df["feature"].values[:5]
-    st.write("The top features are `" + "`, `".join(feats_) + "`.")
+        overall_top_df["val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
+        overall_top_df.sort_values("val", ascending=False, inplace=True, ignore_index=True)
+        top_features = overall_top_df["feature"].iloc[:config["num_top_features"]].tolist()
+        return top_features, None
+
+    # Get top features by shap_values
+    top_shap_df = get_top_features(all_shap_values[0], feature_names, config["num_top_features"])
+    corr_df = compute_corrcoef(top_shap_df, x_valid, y_score)
+    xai_charts(corr_df,
+               x_valid,
+               all_shap_values[0],
+               feature_names,
+               config["num_top_features"])
+
+    top_features = top_shap_df["feature"].tolist()
+    st.write("The top features are `" + "`, `".join(top_features[:5]) + "`.")
     return top_features, corr_df
 
 
@@ -217,17 +225,17 @@ def dependence_chart(source, feat_col, val_col="value"):
     return stripplot
 
 
-def model_xai_appendix(shap_values, x_valid, feature_names, top_features):
+def model_xai_appendix(all_shap_values, x_valid, feature_names, top_features, is_multiclass):
     features = x_valid.values
 
     for feat_name in top_features:
         st.subheader(f"Feature: `{feat_name}`")
-        for lb, shap_val in enumerate(shap_values):
-            title = ""
-            if len(shap_values) > 1:
+        title = ""
+        for lb, shap_values in enumerate(all_shap_values):
+            if is_multiclass:
                 title = f"Target Class {lb}"
 
-            source = make_source_dp(shap_val, features, feature_names, feat_name)
+            source = make_source_dp(shap_values, features, feature_names, feat_name)
             st.altair_chart(
                 dependence_chart(source, feat_name).properties(title=title),
                 use_container_width=False,
@@ -277,7 +285,7 @@ def waterfall_chart(source, decimal=3):
 
     bars = alt.Chart(source).mark_bar().encode(
         alt.X("feature:O", sort=source["feature"].tolist()),
-        alt.Y("open:Q", scale=alt.Scale(zero=False)),
+        alt.Y("open:Q", scale=alt.Scale(zero=False), title=""),
         alt.Y2("close:Q"),
         alt.Tooltip(["feature", "feature_value", "shap_value"]),
     )
@@ -317,16 +325,16 @@ def indiv_xai(instance, base_value, shap_values, title="", max_display=10):
     st.altair_chart(chart, use_container_width=False)
 
 
-def indiv_xai_appendix(x_valid, sample_idx, shap_values, base_value, config):
+def indiv_xai_appendix(x_valid, sample_idx, all_shap_values, all_base_values, config, is_multiclass):
     for fcl, row in sample_idx.items():
         st.subheader(f"Fairness Class {fcl}")
-        for lb, (shap_val, base_val) in enumerate(zip(shap_values, base_value)):
-            if len(base_value) == 1:
-                title = ""
-            else:
+        title = ""
+        for lb, (shap_values, base_value) in enumerate(zip(all_shap_values, all_base_values)):
+            if is_multiclass:
                 title = f"Target Class {lb}"
+
             indiv_xai(x_valid.iloc[row: row + 1],
-                      base_val,
-                      shap_val[row],
+                      base_value,
+                      shap_values[row],
                       title=title,
                       max_display=config["num_top_features"])
