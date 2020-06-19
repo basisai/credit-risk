@@ -20,6 +20,11 @@ LOSS_PER_BAD_ACCT = 1200
 REV_PER_GOOD_ACCT = 100
 
 
+@st.cache
+def load_predictions():
+    return pd.read_csv("output/preds.csv")
+
+
 def cdf_charts(good_prob, bad_prob):
     """Plot CDF chart."""
     source1 = pd.DataFrame({
@@ -81,9 +86,9 @@ def heatmap_chart(df, title=""):
 
 def analyse_model(y_true, y_prob):
     st.subheader('ANOVA')
-    threshold_anova = st.slider(
-        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01, key=1)
-    bad_mean, good_mean, anova = anova_func(y_true, y_prob, threshold_anova)
+    accept_threshold = st.slider(
+        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01)
+    bad_mean, good_mean, anova = anova_func(y_true, y_prob, accept_threshold)
     st.write(f'Mean default rate in group predicted to be bad = `{bad_mean:.4f}`')
     st.write(f'Mean default rate in group predicted to be good = `{good_mean:.4f}`')
     st.write('ANOVA statistic for difference in default rate between predicted bad and '
@@ -115,12 +120,6 @@ def analyse_model(y_true, y_prob):
 
     # st.subheader('Table of performance per tranche')
     st.write(tranche_table)
-
-
-def single_model(x_valid, y_valid):
-    clf = load_model("output/lgb_model.pkl")
-    y_pred = predict(clf, x_valid)
-    analyse_model(y_valid, y_pred)
 
 
 def odds_chart(y_true, y_prob, y_baseline, num_bins):
@@ -186,19 +185,19 @@ def compare_models(y_true, y_prob, y_baseline):
     st.subheader('Odds ratio')
     odds_chart(y_true, y_prob, y_baseline, num_bins)
 
-    acceptThreshold = st.slider(
+    accept_threshold = st.slider(
         "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01, key=1)
 
     st.subheader('Metrics')
-    metrics_tables(y_true, y_prob, y_baseline, acceptThreshold)
+    metrics_tables(y_true, y_prob, y_baseline, accept_threshold)
 
     st.subheader('Statistics')
-    stats_table(y_true, y_prob, y_baseline, acceptThreshold)
+    stats_table(y_true, y_prob, y_baseline, accept_threshold)
 
     st.subheader('Swap set analysis')
-    swapSetThreshold = st.slider(
+    swapset_threshold = st.slider(
         "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01, key=2)
-    swapset_tables(y_true, y_prob, y_baseline, swapSetThreshold)
+    swapset_tables(y_true, y_prob, y_baseline, swapset_threshold)
 
 
 # TODO
@@ -248,31 +247,22 @@ def swapset_tables(y_true, y_prob, y_baseline, swapSetThreshold):
     st.write('*Legend: Green - new bad rate, Red - old bad rate*')
 
 
-def multiple_models(x_valid, y_valid):
-    lgb_clf = load_model("output/lgb_model.pkl")
-    y_prob = predict(lgb_clf, x_valid)
-
-    xgb_clf = load_model("output/xgb_model.pkl")
-    y_baseline = xgb_clf.predict_proba(x_valid)[:, 1]
-
-    compare_models(y_valid, y_prob, y_baseline)
-
-
 def main():
     st.title("Credit Risk Analysis")
 
     singleOrMultiple = st.sidebar.selectbox(
-        label='Select mode', options=['Single model', 'Model comparison'])
+        label='Select mode', options=['Model comparison', 'Single model'])
 
-    valid = load_data("output/valid.gz.parquet")
-    y_valid = valid[TARGET].values
-    x_valid = valid[FEATURES]
+    preds = load_predictions()
+    y_valid = preds["y_valid"].values
+    y_prob = preds["y_prob"].values
+    y_baseline = preds["y_baseline"].values
 
     if singleOrMultiple == 'Single model':
-        single_model(x_valid, y_valid)
+        analyse_model(y_valid, y_prob)
     elif singleOrMultiple == 'Model comparison':
         st.header("Model Comparison")
-        multiple_models(x_valid, y_valid)
+        compare_models(y_valid, y_prob, y_baseline)
 
 
 if __name__ == "__main__":

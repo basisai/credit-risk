@@ -59,9 +59,9 @@ def odds_func(y_true, y_prob, num_bins):
                 'Number of bad loans', 'Cumulative % of bad loans', 'Odds (good to bad)']]
 
 
-def score_shift_func(predictProbA, predictProbB, num_bins):
-    bin1 = np.clip((predictProbA * num_bins).astype(int), 0, num_bins - 1)
-    bin2 = np.clip((predictProbB * num_bins).astype(int), 0, num_bins - 1)
+def score_shift_func(prob_a, prob_b, num_bins):
+    bin1 = np.clip((prob_a * num_bins).astype(int), 0, num_bins - 1)
+    bin2 = np.clip((prob_b * num_bins).astype(int), 0, num_bins - 1)
     score_mat = coo_matrix(
         (np.ones(len(bin1)), (bin1, bin2)),
         shape=(num_bins, num_bins)
