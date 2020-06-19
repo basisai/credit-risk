@@ -54,7 +54,7 @@ def fai(debias=False):
     protected_attribute = st.selectbox("Select protected column.", list(CONFIG_FAI.keys()))
 
     # Load data
-    valid = load_data("output/valid.gz.parquet").fillna(0)
+    valid = load_data("output/test.gz.parquet").fillna(0)
     x_valid = valid[FEATURES]
     y_valid = valid[TARGET].values
 
