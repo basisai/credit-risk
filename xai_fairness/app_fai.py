@@ -32,7 +32,7 @@ def print_model_perf(y_val, y_pred):
 @st.cache
 def prepare_pred(x_valid, y_valid, debias=False):
     # Load model
-    clf = load_model("output/lgb_clf.pkl")
+    clf = load_model("output/lgb_model.pkl")
 
     # Predict on val data
     y_prob = predict(clf, x_valid)
@@ -54,7 +54,7 @@ def fai(debias=False):
     protected_attribute = st.selectbox("Select protected column.", list(CONFIG_FAI.keys()))
 
     # Load data
-    valid = load_data("output/test.gz.parquet").fillna(0)
+    valid = load_data("output/valid.gz.parquet").fillna(0)
     x_valid = valid[FEATURES]
     y_valid = valid[TARGET].values
 

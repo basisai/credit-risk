@@ -12,7 +12,7 @@ def get_sk_ids(series):
 
 
 def xai_indiv():
-    clf = load_model("output/lgb_clf.pkl")
+    clf = load_model("output/lgb_model.pkl")
     sample = load_data("output/test.gz.parquet", num_rows=100)
     sk_ids = get_sk_ids(sample["SK_ID_CURR"])
 
