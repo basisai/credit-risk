@@ -90,8 +90,11 @@ def compute_log_metrics(clf, x_val, y_val):
                            y_prob.flatten().tolist())
 
     # Calculate and upload xafai metrics
-    analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
-    analyzer.fairness_config(CONFIG_FAI).test_labels(y_val).test_inference(y_pred)
+    analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE) \
+        .fairness_config(CONFIG_FAI) \
+        .test_features(x_val[list(CONFIG_FAI.keys())]) \
+        .test_labels(y_val) \
+        .test_inference(y_pred)
     analyzer.analyze()
 
 
