@@ -6,6 +6,8 @@ import os
 import pickle
 import time
 
+from bedrock_client.bedrock.analyzer.model_analyzer import ModelAnalyzer
+from bedrock_client.bedrock.analyzer import ModelTypes
 from bedrock_client.bedrock.api import BedrockApi
 from bedrock_client.bedrock.metrics.service import ModelMonitoringService
 import lightgbm as lgb
