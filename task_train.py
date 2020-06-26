@@ -99,6 +99,7 @@ def trainer(execution_date):
     """Entry point to perform training."""
     print("Load train data")
     data = load_data(TMP_BUCKET + "credit_train/train.csv")
+    data = data.fillna(0)
     print("  Train data shape:", data.shape)
 
     feature_cols = get_feats_to_use()
