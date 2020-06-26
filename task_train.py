@@ -90,6 +90,11 @@ def compute_log_metrics(clf, x_val, y_val):
                            y_prob.flatten().tolist())
 
     # Calculate and upload xafai metrics
+    if (x_val.shape[0] > 8000):
+        selected = np.random.choice(x_val.shape[0], size=8000, replace=False)
+        x_val = x_val.iloc[selected]
+        y_val = y_val[selected]
+        y_pred = y_pred[selected]
     analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
     analyzer.fairness_config(CONFIG_FAI).test_labels(y_val).test_inference(y_pred)
     analyzer.analyze()
