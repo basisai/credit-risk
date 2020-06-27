@@ -4,7 +4,6 @@ import altair as alt
 import streamlit as st
 from streamlit.elements import altair
 
-from app_utils import load_model, load_data, predict
 from credit_analysis.toolkit import (
     anova_func,
     ks_func,
@@ -12,7 +11,7 @@ from credit_analysis.toolkit import (
     odds_func,
     score_shift_func,
     acct_table,
-    highlight_cells,
+    swapset,
 )
 from preprocess.constants import FEATURES, TARGET
 
@@ -195,56 +194,26 @@ def compare_models(y_true, y_prob, y_baseline):
     stats_table(y_true, y_prob, y_baseline, accept_threshold)
 
     st.subheader('Swap set analysis')
-    swapset_threshold = st.slider(
-        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01, key=2)
-    swapset_tables(y_true, y_prob, y_baseline, swapset_threshold)
 
+    def convert_scores(y_baseline, y_prob):
+        y_baseline = np.array(y_baseline)
+        y_prob = np.array(y_prob)
+        old_score = -np.log(y_baseline / (1 - y_baseline)) * 100
+        new_score = -np.log(y_prob / (1 - y_prob)) * 100 + 50
+        return old_score, new_score
 
-# TODO
-def swapset_tables(y_true, y_prob, y_baseline, swapSetThreshold):
-    lrAccepts = (y_prob < swapSetThreshold)
-    tmAccepts = (y_baseline < swapSetThreshold)
-
-    st.write('Original Breakdown:')
-    from sklearn import metrics
-    accept_mat = metrics.confusion_matrix(lrAccepts * 1, tmAccepts * 1)
-    preSwapTable = pd.DataFrame(np.rot90(np.rot90(accept_mat)),
-                                columns=['Accepted by B', 'Rejected by B'],
-                                index=['Accepted by A', 'Rejected by A'])
-    st.write(preSwapTable)
-
-    # preSwapTable = np.zeros((2, 2))
-    # preSwapTable[0, 0] = np.sum(lrAccepts[lrAccepts == tmAccepts])
-    # preSwapTable[1, 1] = np.sum(~lrAccepts[lrAccepts == tmAccepts])
-    # preSwapTable[0, 1] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-    # preSwapTable[1, 0] = np.sum(tmAccepts[lrAccepts != tmAccepts])
-    # preSwapTable = pd.DataFrame(preSwapTable, columns=['Accepted by B', 'Rejected by B'],
-    #                             index=['Accepted by A', 'Rejected by A'])
-    # st.write(preSwapTable)
-
-    st.write('Swapped to maintain same approval rate:')
-    swapSameApprovalRate = np.zeros((3, 3))
-    swapSameApprovalRate[0, 0] = np.sum(lrAccepts[lrAccepts == tmAccepts])
-    swapSameApprovalRate[0, 1] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-    swapSameApprovalRate[1, 0] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-    swapSameApprovalRate[1, 1] = np.sum(~lrAccepts[lrAccepts == tmAccepts])
-    swapSameApprovalRate[0, 2] = np.sum(y_true[lrAccepts]) / np.sum(lrAccepts)
-
-    lr_num = lrAccepts[lrAccepts != tmAccepts].sum()
-    tm_num = tmAccepts[lrAccepts != tmAccepts].sum()
-    if lr_num < tm_num:
-        swapIn = np.random.choice(
-            y_true[(lrAccepts != tmAccepts) & (tmAccepts == 1)], lr_num, replace=False)
-        swapSameApprovalRate[2, 0] = (np.sum(y_true[(lrAccepts == tmAccepts) & (lrAccepts == 1)]) +
-                                      np.sum(swapIn)) / \
-                                     (swapSameApprovalRate[1, 0] + swapSameApprovalRate[0, 0])
-    swapSameApprovalRate = pd.DataFrame(swapSameApprovalRate,
-                                        columns=['Accepted by B', 'Rejected by B', 'Old Bad Rate'],
-                                        index=['Accepted by A', 'Rejected by A', 'New Bad Rate'])
-
-    swapSameApprovalRate = swapSameApprovalRate.style.apply(highlight_cells, axis=None)
-    st.write(swapSameApprovalRate)
-    st.write('*Legend: Green - new bad rate, Red - old bad rate*')
+    old_score, new_score = convert_scores(y_baseline, y_prob)
+    swap_df = swapset(y_true, old_score, new_score, bin_width=20)
+    swap_df.columns = [
+        "Score cutoff",
+        "Baseline model: % Above",
+        "Baseline model: % Below",
+        "Swap set: % Swapped Above",
+        "Swap set: % Swapped Below",
+        "Swap set odds: Swapped Above",
+        "Swap set odds: Swapped Below",
+    ]
+    st.dataframe(swap_df)
 
 
 def main():
