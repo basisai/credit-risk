@@ -13,7 +13,6 @@ from credit_analysis.toolkit import (
     acct_table,
     swapset,
 )
-from preprocess.constants import FEATURES, TARGET
 
 LOSS_PER_BAD_ACCT = 2000
 REV_PER_GOOD_ACCT = 100
@@ -83,7 +82,12 @@ def heatmap_chart(df, title=""):
     return rects + text
 
 
-def analyse_model(y_true, y_prob):
+def analyse_model():
+    """Credit risk analysis: model."""
+    preds = load_predictions()
+    y_true = preds["y_valid"].values
+    y_prob = preds["y_prob"].values
+
     st.subheader('ANOVA')
     accept_threshold = st.slider(
         "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
@@ -174,10 +178,12 @@ def stats_table(y_true, y_prob, y_baseline, threshold):
     st.write(f'Net Gain = `${x[0] - x[1]:.2f}`')
 
 
-def compare_models(y_true, y_prob, y_baseline):
-    y_true = np.array(y_true)
-    y_prob = np.array(y_prob)
-    y_baseline = np.array(y_baseline)
+def compare_models():
+    """Credit risk analysis: model comparison. """
+    preds = load_predictions()
+    y_true = preds["y_valid"].values
+    y_prob = preds["y_prob"].values
+    y_baseline = preds["y_baseline"].values
 
     st.subheader('Score shift')
     num_bins = 10
@@ -235,19 +241,14 @@ def compare_models(y_true, y_prob, y_baseline):
 def main():
     st.title("Credit Risk Analysis")
 
-    singleOrMultiple = st.sidebar.selectbox(
+    select = st.sidebar.selectbox(
         label='Select mode', options=['Model Comparison', 'New Model'])
+    st.header(select)
 
-    preds = load_predictions()
-    y_valid = preds["y_valid"].values
-    y_prob = preds["y_prob"].values
-    y_baseline = preds["y_baseline"].values
-
-    if singleOrMultiple == 'New Model':
-        analyse_model(y_valid, y_prob)
-    elif singleOrMultiple == 'Model Comparison':
-        st.header("Model Comparison")
-        compare_models(y_valid, y_prob, y_baseline)
+    if select == 'New Model':
+        analyse_model()
+    elif select == 'Model Comparison':
+        compare_models()
 
 
 if __name__ == "__main__":
