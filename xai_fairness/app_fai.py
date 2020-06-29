@@ -32,7 +32,7 @@ def print_model_perf(y_val, y_pred):
 @st.cache
 def prepare_pred(x_valid, y_valid, debias=False):
     # Load model
-    clf = load_model("output/lgb_clf.pkl")
+    clf = load_model("output/lgb_model.pkl")
 
     # Predict on val data
     y_prob = predict(clf, x_valid)
@@ -57,6 +57,7 @@ def fai(debias=False):
     valid = load_data("output/test.gz.parquet").fillna(0)
     x_valid = valid[FEATURES]
     y_valid = valid[TARGET].values
+    valid_fai = valid[list(CONFIG_FAI.keys())]
 
     # Get predictions
     y_pred, text_model_perf = prepare_pred(x_valid, y_valid, debias=debias)
@@ -72,7 +73,7 @@ def fai(debias=False):
     # Compute fairness measures
     privi_info = CONFIG_FAI[protected_attribute]
     aif_metric = get_aif_metric(
-        valid,
+        valid_fai,
         y_valid,
         y_pred,
         protected_attribute,

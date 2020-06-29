@@ -12,7 +12,7 @@ def get_sk_ids(series):
 
 
 def xai_indiv():
-    clf = load_model("output/lgb_clf.pkl")
+    clf = load_model("output/lgb_model.pkl")
     sample = load_data("output/test.gz.parquet", num_rows=100)
     sk_ids = get_sk_ids(sample["SK_ID_CURR"])
 
@@ -38,7 +38,7 @@ def xai_indiv():
     st.subheader("SHAP values")
     shap_values = explainer.shap_values(x_instance)[1][0]
     base_value = explainer.expected_value[1]
-    source = make_source_waterfall(x_instance, base_value, shap_values, max_display=20)
+    source = make_source_waterfall(x_instance, base_value, shap_values, max_display=15)
     st.altair_chart(waterfall_chart(source).properties(height=500),
                     use_container_width=True)
     

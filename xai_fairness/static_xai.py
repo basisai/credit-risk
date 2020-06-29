@@ -94,25 +94,14 @@ def pdp_heatmap(pdp_interact_out, feature_names):
     return chart
 
 
-def get_top_features(shap_values, features, max_display=None):
-    top_shap_df = pd.DataFrame({
-        "feature": features,
+def get_top_features(shap_values, corrs, feature_names):
+    top_df = pd.DataFrame({
+        "feature": feature_names,
         "value": np.abs(shap_values).mean(axis=0),
+        "corrcoef": corrs,
     })
-    top_shap_df.sort_values("value", ascending=False, inplace=True, ignore_index=True)
-    if max_display is None:
-        return top_shap_df
-    return top_shap_df.iloc[:max_display]
-
-
-def compute_corrcoef(df, x_valid, y_score):
-    output_df = df.copy()
-    corrcoef = []
-    for col in output_df["feature"].values:
-        df_ = pd.DataFrame({"x": x_valid[col].values, "y": y_score})
-        corrcoef.append(df_.corr(method='pearson').values[0, 1])
-    output_df["corrcoef"] = corrcoef
-    return output_df
+    top_df.sort_values("value", ascending=False, inplace=True, ignore_index=True)
+    return top_df
 
 
 def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
@@ -140,38 +129,39 @@ def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
     st.pyplot()
 
 
-def model_xai_summary(x_valid, y_score, all_shap_values, feature_names, config, is_multiclass):
+def model_xai_summary(x_valid, all_shap_values, all_corrs, feature_names, config, is_multiclass):
     if is_multiclass:
         overall_top_df = pd.DataFrame({"feature": feature_names})
-        for lb, shap_values in enumerate(all_shap_values):
+        for lb, (shap_values, corrs) in enumerate(zip(all_shap_values, all_corrs)):
             st.subheader(f"Target Class `{lb}`")
-            top_shap_df = get_top_features(shap_values, feature_names)
-            overall_top_df = pd.merge(overall_top_df, top_shap_df, on="feature")
-            corr_df = compute_corrcoef(top_shap_df.iloc[:config["num_top_features"]],
-                                       x_valid, y_score[:, lb])
-            xai_charts(corr_df,
+            top_df = get_top_features(shap_values, corrs, feature_names)
+            overall_top_df = pd.merge(overall_top_df, top_df[["feature", "value"]], on="feature")
+
+            xai_charts(top_df.iloc[:config["num_top_features"]],
                        x_valid,
                        shap_values,
                        feature_names,
                        config["num_top_features"])
 
-        overall_top_df["val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
-        overall_top_df.sort_values("val", ascending=False, inplace=True, ignore_index=True)
+        overall_top_df["total_val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
+        overall_top_df.sort_values("total_val", ascending=False, inplace=True, ignore_index=True)
         top_features = overall_top_df["feature"].iloc[:config["num_top_features"]].tolist()
         return top_features, None
 
     # Get top features by shap_values
-    top_shap_df = get_top_features(all_shap_values[0], feature_names, config["num_top_features"])
-    corr_df = compute_corrcoef(top_shap_df, x_valid, y_score)
-    xai_charts(corr_df,
+    top_df = (
+        get_top_features(all_shap_values[0], all_corrs[0], feature_names)
+        .iloc[:config["num_top_features"]]
+    )
+    xai_charts(top_df,
                x_valid,
                all_shap_values[0],
                feature_names,
                config["num_top_features"])
 
-    top_features = top_shap_df["feature"].tolist()
+    top_features = top_df["feature"].tolist()
     st.write("The top features are `" + "`, `".join(top_features[:5]) + "`.")
-    return top_features, corr_df
+    return top_features, top_df
 
 
 def make_source_dp(shap_values, features, feature_names, feature):
@@ -250,7 +240,7 @@ def make_source_waterfall(instance, base_value, shap_values, max_display=10):
     df["val_"] = df["shap_value"].abs()
     df = df.sort_values("val_", ascending=False)
 
-    df["val_"] = df["shap_value"]
+    df["val_"] = df["shap_value"].values
     remaining = df["shap_value"].iloc[max_display:].sum()
     output_value = df["shap_value"].sum() + base_value
 
@@ -259,11 +249,11 @@ def make_source_waterfall(instance, base_value, shap_values, max_display=10):
     df0 = pd.DataFrame({"feature": ["Average Model Output"],
                         "shap_value": [base_value],
                         "val_": [base_value]})
-    df1 = _df.query("shap_value > 0").sort_values("shap_value", ascending=False)
+    df1 = _df.query("shap_value > 0").sort_values("shap_value", ascending=False).copy()
     df2 = pd.DataFrame({"feature": ["Others"],
                         "shap_value": [remaining],
                         "val_": [remaining]})
-    df3 = _df.query("shap_value < 0").sort_values("shap_value")
+    df3 = _df.query("shap_value < 0").sort_values("shap_value").copy()
     df4 = pd.DataFrame({"feature": ["Individual Observation"],
                         "shap_value": [output_value],
                         "val_": [0]})
@@ -281,10 +271,10 @@ def waterfall_chart(source, decimal=3):
     source = source.copy()
     for c in ["feature_value", "shap_value"]:
         source[c] = source[c].round(decimal).astype(str)
-    source["feature_value"].loc[source["feature_value"] == "nan"] = ""
+    source.loc[source["feature_value"] == "nan", "feature_value"] = ""
 
     bars = alt.Chart(source).mark_bar().encode(
-        alt.X("feature:O", sort=source["feature"].tolist()),
+        alt.X("feature:O", sort=source["feature"].tolist(), axis=alt.Axis(labelLimit=120)),
         alt.Y("open:Q", scale=alt.Scale(zero=False), title=""),
         alt.Y2("close:Q"),
         alt.Tooltip(["feature", "feature_value", "shap_value"]),
@@ -306,9 +296,8 @@ def waterfall_chart(source, decimal=3):
     text = bars.mark_text(
         align='center',
         baseline='middle',
-        dx=18,
+        dy=-5,
         color='black',
-        angle=270,
     ).encode(
         text='feature_value:N',
     )
@@ -317,24 +306,21 @@ def waterfall_chart(source, decimal=3):
 
 def indiv_xai(instance, base_value, shap_values, title="", max_display=10):
     source = make_source_waterfall(instance, base_value, shap_values, max_display=max_display)
-    chart = waterfall_chart(source)
-    chart = chart.properties(
-        height=400,
+    chart = waterfall_chart(source).properties(
         title=title,
     )
-    st.altair_chart(chart, use_container_width=False)
+    st.altair_chart(chart, use_container_width=True)
 
 
-def indiv_xai_appendix(x_valid, sample_idx, all_shap_values, all_base_values, config, is_multiclass):
-    for fcl, row in sample_idx.items():
-        st.subheader(f"Fairness Class {fcl}")
-        title = ""
-        for lb, (shap_values, base_value) in enumerate(zip(all_shap_values, all_base_values)):
+def indiv_xai_appendix(indiv_samples, indiv_shap_values, indiv_base_values, config, is_multiclass):
+    for i, (tcl, x) in enumerate(indiv_samples.items()):
+        for lb, (shap_values, base_value) in enumerate(zip(indiv_shap_values, indiv_base_values)):
+            title = f"Sample from Class={tcl}: SHAP Contribution to Model Prediction"
             if is_multiclass:
-                title = f"Target Class {lb}"
+                title += f" for Class={lb}"
 
-            indiv_xai(x_valid.iloc[row: row + 1],
+            st.write(f"**{title}**")
+            indiv_xai(x,
                       base_value,
-                      shap_values[row],
-                      title=title,
+                      shap_values[i],
                       max_display=config["num_top_features"])

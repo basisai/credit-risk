@@ -5,10 +5,89 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import shap
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics.classification_metric import ClassificationMetric
 from pdpbox import pdp, info_plots
 from IPython.display import display
+
+
+def compute_shap_values(
+    x,
+    model=None,
+    model_type=None,
+    predict_func=None,
+    bkgrd_data=None,
+    kmeans_size=10,
+):
+    """Function to compute SHAP values, which are used for XAI.
+    Use the relevant explainer for each type of model.
+    :param pandas.DataFrame x: Validation/test data to use for explanation
+    :param Optional model: Model to compute shap values for. In case model is of unsupported
+        type, use predict_func to pass in a generic function instead
+    :param Optional[str] model_type: Type of the model
+    :param Optional[Callable] predict_func: Generic function to compute shap values for.
+        It should take a matrix of samples (# samples x # features) and compute the
+        output of the model for those samples.
+        The output can be a vector (# samples) or a matrix (# samples x # model outputs).
+    :param: Optional[pandas.DataFrame] bkgrd_data: background data for explainability analysis
+    :param: Optional[int] kmeans_size: Number of k-means clusters. Only required for explaining generic
+        predict_func
+    :return Tuple[list(numpy.array), numpy_array]: shap_values, base_value.
+    len(base_value) must be the same as len(shap_values)
+    """
+    if model_type == "tree":
+        explainer = shap.TreeExplainer(model, data=bkgrd_data)
+    else:
+        if bkgrd_data is None:
+            raise ValueError("Non tree model requires background data")
+        if model_type == "linear":
+            explainer = shap.LinearExplainer(model, bkgrd_data)
+        else:
+            explainer = _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size)
+
+    shap_values = explainer.shap_values(x)
+    base_value = explainer.expected_value
+    return check_values(shap_values, base_value)
+
+
+def _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size):
+    if predict_func is None:
+        raise ValueError("No target to compute shap values. Expected either model or predict_func")
+    # rather than use the whole training set to estimate expected values,
+    # summarize with a set of weighted kmeans, each weighted by
+    # the number of points they represent.
+    x_bkgrd_summary = shap.kmeans(bkgrd_data, kmeans_size)
+    return shap.KernelExplainer(predict_func, x_bkgrd_summary)
+
+
+def check_values(shap_values, base_value):
+    """
+    Check shape of shap_values and base_value.
+    len(base_value) == len(shap_values) and type(shap_values) must be a list
+    :param numpy.array shap_values:
+    :param numpy.array base_value:
+    """
+    if isinstance(shap_values, np.ndarray) and len(shap_values.shape) == 2:
+        shap_values = [shap_values]
+    return shap_values, np.array(base_value).reshape(-1)
+
+
+def compute_corrcoef(features, shap_values):
+    """
+    Compute correlation between each feature and its SHAP values.
+    :param pandas.DataFrame features:
+    :param numpy.array shap_values:
+    :return numpy.array: (shape = (dim of predict output, number of features))
+    """
+    all_corrs = list()
+    for cls_shap_val in shap_values:
+        corrs= list()
+        for i in range(features.shape[1]):
+            df_ = pd.DataFrame({"x": features.iloc[:, i].values, "y": cls_shap_val[:, i]})
+            corrs.append(df_.corr(method="pearson").values[0, 1])
+        all_corrs.append(np.array(corrs))
+    return all_corrs
 
 
 def pdp_plot(model,
