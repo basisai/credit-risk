@@ -15,7 +15,7 @@ from credit_analysis.toolkit import (
 )
 from preprocess.constants import FEATURES, TARGET
 
-LOSS_PER_BAD_ACCT = 1200
+LOSS_PER_BAD_ACCT = 2000
 REV_PER_GOOD_ACCT = 100
 
 
@@ -86,7 +86,7 @@ def heatmap_chart(df, title=""):
 def analyse_model(y_true, y_prob):
     st.subheader('ANOVA')
     accept_threshold = st.slider(
-        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01)
+        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
     bad_mean, good_mean, anova = anova_func(y_true, y_prob, accept_threshold)
     st.write(f'Mean default rate in group predicted to be bad = `{bad_mean:.4f}`')
     st.write(f'Mean default rate in group predicted to be good = `{good_mean:.4f}`')
@@ -175,6 +175,10 @@ def stats_table(y_true, y_prob, y_baseline, threshold):
 
 
 def compare_models(y_true, y_prob, y_baseline):
+    y_true = np.array(y_true)
+    y_prob = np.array(y_prob)
+    y_baseline = np.array(y_baseline)
+
     st.subheader('Score shift')
     num_bins = 10
     score_shift_matrix = score_shift_func(y_prob, y_baseline, num_bins)
@@ -185,7 +189,7 @@ def compare_models(y_true, y_prob, y_baseline):
     odds_chart(y_true, y_prob, y_baseline, num_bins)
 
     accept_threshold = st.slider(
-        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.15, step=0.01, key=1)
+        "Probability cutoff for approval", min_value=0.0, max_value=1.0, value=0.05, step=0.01, key=1)
 
     st.subheader('Metrics')
     metrics_tables(y_true, y_prob, y_baseline, accept_threshold)
@@ -194,42 +198,54 @@ def compare_models(y_true, y_prob, y_baseline):
     stats_table(y_true, y_prob, y_baseline, accept_threshold)
 
     st.subheader('Swap set analysis')
+    pct_above, pct_below, pct_swap_above, pct_swap_below, odds_swap_above, odds_swap_below = swapset(
+        y_true, y_prob, y_baseline, accept_threshold)
+    st.write(pd.DataFrame(
+        [[pct_below], [pct_above], [pct_swap_below], [pct_swap_above],
+         [odds_swap_below], [odds_swap_above]],
+        columns=[f"Probability cutoff = {accept_threshold:.2f}"],
+        index=[
+            "Baseline model: % Below",
+            "Baseline model: % Above",
+            "Swap set: % Swapped Below",
+            "Swap set: % Swapped Above",
+            "Swap set odds: Swapped Below",
+            "Swap set odds: Swapped Above",
+        ]
+    ))
+    net = pct_swap_below - pct_swap_above
+    is_more = "more" if net > 0 else "less"
 
-    def convert_scores(y_baseline, y_prob):
-        y_baseline = np.array(y_baseline)
-        y_prob = np.array(y_prob)
-        old_score = -np.log(y_baseline / (1 - y_baseline)) * 100
-        new_score = -np.log(y_prob / (1 - y_prob)) * 100 + 50
-        return old_score, new_score
-
-    old_score, new_score = convert_scores(y_baseline, y_prob)
-    swap_df = swapset(y_true, old_score, new_score, bin_width=20)
-    swap_df.columns = [
-        "Score cutoff",
-        "Baseline model: % Above",
-        "Baseline model: % Below",
-        "Swap set: % Swapped Above",
-        "Swap set: % Swapped Below",
-        "Swap set odds: Swapped Above",
-        "Swap set odds: Swapped Below",
-    ]
-    st.dataframe(swap_df)
+    st.write(f"With probability of default cutoff at `{accept_threshold:.2f}`, "
+             f"the baseline model indicate that `{pct_below:.1f}%` of the loans "
+             f"had a probability of `{accept_threshold:.2f}` or below, and "
+             f"`{pct_above:.1f}%` had a score below the `{accept_threshold:.2f}` cutoff. "
+             f"Analyzing the swap set, we see a net of `{net:.1f}%` "
+             f"of the population that would have moved below a probability of `{accept_threshold:.2f}` "
+             f"as a result of switching to new model - that is, the difference between "
+             f"the `{pct_swap_above:.2f}%` of the population that swapped above and "
+             f"the `{pct_swap_below:.2f}%` of the population swapped below the predicted probability "
+             f"cutoff, resulting in {is_more} consumers being approved for credit.")
+    st.write("From the performance odds (good to bad ratio) of the actual loans, "
+             "we see consumers shifting to lower probability ranges that have higher odds of "
+             "repayment and those shifting to higher probability that have lower odds of performance, "
+             "demonstrating that the new model further refines classifying risk prediction.")
 
 
 def main():
     st.title("Credit Risk Analysis")
 
     singleOrMultiple = st.sidebar.selectbox(
-        label='Select mode', options=['Model comparison', 'Single model'])
+        label='Select mode', options=['Model Comparison', 'New Model'])
 
     preds = load_predictions()
     y_valid = preds["y_valid"].values
     y_prob = preds["y_prob"].values
     y_baseline = preds["y_baseline"].values
 
-    if singleOrMultiple == 'Single model':
+    if singleOrMultiple == 'New Model':
         analyse_model(y_valid, y_prob)
-    elif singleOrMultiple == 'Model comparison':
+    elif singleOrMultiple == 'Model Comparison':
         st.header("Model Comparison")
         compare_models(y_valid, y_prob, y_baseline)
 

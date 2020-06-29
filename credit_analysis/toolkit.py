@@ -95,35 +95,20 @@ def acct_table(y_true, y_prob, threshold, loss_per_bad_acct=2500, rev_per_good_a
     return output_df
 
 
-def swapset(y_true, old_score, new_score, bin_width=20):
-    scores = np.arange(100, 500 + bin_width, bin_width)
-    cnt = list()
-    swap_above = list()
-    swap_above_bad = list()
-    swap_below = list()
-    swap_below_bad = list()
-    for s in scores:
-        cnt.append(np.sum(old_score > s))
-        swap_above.append(np.sum((old_score < s) & (new_score > s)))
-        swap_above_bad.append(np.sum((old_score < s) & (new_score > s) & (y_true == 1)))
-        swap_below.append(np.sum((old_score > s) & (new_score < s)))
-        swap_below_bad.append(np.sum((old_score > s) & (new_score < s) & (y_true == 1)))
+def swapset(y_true, y_prob, y_baseline, cutoff):
+    cnt = np.sum(y_baseline > cutoff)
+    swap_above = np.sum((y_baseline < cutoff) & (y_prob > cutoff))
+    swap_above_bad = np.sum((y_baseline < cutoff) & (y_prob > cutoff) & (y_true == 1))
+    swap_below = np.sum((y_baseline > cutoff) & (y_prob < cutoff))
+    swap_below_bad = np.sum((y_baseline > cutoff) & (y_prob < cutoff) & (y_true == 1))
 
-    cnt = np.array(cnt)
-    swap_above = np.array(swap_above)
-    swap_above_bad = np.array(swap_above_bad)
-    swap_below = np.array(swap_below)
-    swap_below_bad = np.array(swap_below_bad)
-    df = pd.DataFrame({
-        "cutoff": scores,
-        "pct_above": cnt / len(y_true) * 100,
-        "pct_below": 100 - cnt / len(y_true) * 100,
-        "pct_swap_above": swap_above / len(y_true) * 100,
-        "pct_swap_below": swap_below / len(y_true) * 100,
-        "odds_swap_above": (swap_above - swap_above_bad) / swap_above_bad,
-        "odds_swap_below": (swap_below - swap_below_bad) / swap_below_bad,
-    })
-    return df
+    pct_above = cnt / len(y_true) * 100
+    pct_below = 100 - cnt / len(y_true) * 100
+    pct_swap_above = swap_above / len(y_true) * 100
+    pct_swap_below = swap_below / len(y_true) * 100
+    odds_swap_above = (swap_above - swap_above_bad) / swap_above_bad
+    odds_swap_below = (swap_below - swap_below_bad) / swap_below_bad
+    return pct_above, pct_below, pct_swap_above, pct_swap_below, odds_swap_above, odds_swap_below
 
 
 # TODO
