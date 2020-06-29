@@ -90,7 +90,7 @@ def compute_log_metrics(clf, x_val, y_val):
 
 def trainer(execution_date):
     """Entry point to perform training."""
-    print("Load train data")
+    print("\nLoad train data")
     data = load_data(TMP_BUCKET + "credit_train/train.csv")
     print("  Train data shape:", data.shape)
 
