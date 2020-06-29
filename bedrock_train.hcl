@@ -66,3 +66,23 @@ serve {
         WORKERS = "1"
     }
 }
+
+batch_score {
+    step compute_shap {
+        image = "basisai/workload-standard:v0.1.2"
+        install = [
+            "pip3 install --upgrade pip",
+            "pip3 install -r requirements-train.txt",
+            "pip3 install shap==0.35.0",
+        ]
+        script = [{sh = ["python3 task_shap.py"]}]
+        resources {
+            cpu = "2"
+            memory = "14G"
+        }
+    }
+
+    parameters {
+        EXECUTION_DATE = ""
+    }
+}
