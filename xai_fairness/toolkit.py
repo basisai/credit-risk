@@ -353,7 +353,7 @@ def compute_fairness_measures(aif_metric):
                 aif_metric.false_positive_rate(True)) / 2
     eqodds_ratio = eqodds_up / eqodds_p
     fmeasures.append([
-        "Equalized odd",
+        "Equalized odds",
         "Separation",
         eqodds_all,
         eqodds_up,
