@@ -6,6 +6,8 @@ import os
 import pickle
 import time
 
+from bedrock_client.bedrock.analyzer.model_analyzer import ModelAnalyzer
+from bedrock_client.bedrock.analyzer import ModelTypes
 from bedrock_client.bedrock.api import BedrockApi
 from bedrock_client.bedrock.metrics.service import ModelMonitoringService
 import lightgbm as lgb
@@ -14,7 +16,7 @@ import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
-from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET
+from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, CONFIG_FAI
 from preprocess.utils import load_data, get_execution_date
 
 TMP_BUCKET = "gs://span-temp-production/"
@@ -58,13 +60,13 @@ def get_model():
         )
     else:
         raise Exception("Model not implemented")
-    
+
 
 def compute_log_metrics(clf, x_val, y_val):
     """Compute and log metrics."""
     y_prob = clf.predict_proba(x_val)[:, 1]
     y_pred = (y_prob > 0.5).astype(int)
-    
+
     acc = metrics.accuracy_score(y_val, y_pred)
     precision = metrics.precision_score(y_val, y_pred)
     recall = metrics.recall_score(y_val, y_pred)
@@ -87,11 +89,17 @@ def compute_log_metrics(clf, x_val, y_val):
     bedrock.log_chart_data(y_val.astype(int).tolist(),
                            y_prob.flatten().tolist())
 
+    # Calculate and upload xafai metrics
+    analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
+    analyzer.fairness_config(CONFIG_FAI).test_labels(y_val).test_inference(y_pred)
+    analyzer.analyze()
+
 
 def trainer(execution_date):
     """Entry point to perform training."""
     print("\nLoad train data")
     data = load_data(TMP_BUCKET + "credit_train/train.csv")
+    data = data.fillna(0)
     print("  Train data shape:", data.shape)
 
     feature_cols = get_feats_to_use()

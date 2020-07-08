@@ -43,7 +43,7 @@ train {
     }
 
     parameters {
-        EXECUTION_DATE = ""
+        EXECUTION_DATE = "2019-07-01"
         MODEL_VER = "lightgbm"
         NUM_LEAVES = "34"
         MAX_DEPTH = "8"
