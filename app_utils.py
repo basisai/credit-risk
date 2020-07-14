@@ -13,7 +13,7 @@ def load_model(filename):
 
 @st.cache(allow_output_mutation=True)
 def load_data(filename, sample_size=None, random_state=0):
-    df = pd.read_csv(filename)
+    df = pd.read_parquet(filename)
     if sample_size is None:
         return df
     return df.sample(sample_size, random_state=random_state)
