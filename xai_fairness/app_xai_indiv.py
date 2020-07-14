@@ -1,7 +1,7 @@
 import altair as alt
 import streamlit as st
 
-from app_utils import load_model, load_data, predict, compute_shap
+from app_utils import load_model, load_data, predict
 from preprocess.constants import FEATURES, TARGET
 from .static_xai import make_source_waterfall, waterfall_chart
 
@@ -34,12 +34,7 @@ def xai_indiv():
 
     scores = predict(clf, x_sample)
 
-    all_shap_values, all_base_value = compute_shap(clf, x_sample)
-
-    idx = 0
-    if TARGET_CLASSES is not None and len(TARGET_CLASSES) > 2:
-        select_class = st.selectbox("Select class", TARGET_CLASSES, 1)
-        idx = TARGET_CLASSES.index(select_class)
+    shap_df = load_data("output/shap_df.gz.parquet")
 
     # TODO
     score_df = sample[[TARGET]].copy()
@@ -72,8 +67,8 @@ def xai_indiv():
 
         # Compute SHAP values
         st.subheader("Feature SHAP contribution to prediction")
-        shap_values = all_shap_values[idx][row_idx]
-        base_value = all_base_value[idx]
+        shap_values = shap_df[FEATURES].iloc[row_idx].values
+        base_value = shap_df["base_value"].iloc[row_idx]
         source = make_source_waterfall(instance, base_value, shap_values, max_display=15)
         st.altair_chart(waterfall_chart(source).properties(height=500),
                         use_container_width=True)
