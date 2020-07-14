@@ -76,10 +76,10 @@ def compute_log_metrics(clf, x_val, y_val):
     print("Evaluation\n"
           f"  Accuracy          = {acc:.4f}\n"
           f"  Precision         = {precision:.4f}\n"
-          f"  Recall            = {recall:.6f}\n"
-          f"  F1 score          = {f1_score:.6f}\n"
-          f"  ROC AUC           = {roc_auc:.6f}\n"
-          f"  Average precision = {avg_prc:.6f}")
+          f"  Recall            = {recall:.4f}\n"
+          f"  F1 score          = {f1_score:.4f}\n"
+          f"  ROC AUC           = {roc_auc:.4f}\n"
+          f"  Average precision = {avg_prc:.4f}")
 
     # Log metrics
     bedrock = BedrockApi(logging.getLogger(__name__))
@@ -120,21 +120,20 @@ def trainer(execution_date):
             early_stopping_rounds=200)
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
-    print("\nScore model")
+    print("\nEvaluate")
+    compute_log_metrics(clf, x_valid, y_valid)
+
+    print("\nLog model monitoring metrics")
     start = time.time()
     selected = np.random.choice(x_train.shape[0], size=2000, replace=False)
     features = x_train.iloc[selected]
     inference = clf.predict_proba(features)[:, 1]
 
-    print("Log metrics")
     ModelMonitoringService.export_text(
         features=features.iteritems(),
         inference=inference.tolist(),
     )
     print("  Time taken = {:.0f} s".format(time.time() - start))
-
-    print("\nEvaluate")
-    compute_log_metrics(clf, x_valid, y_valid)
 
     print("\nSave model")
     with open(OUTPUT_MODEL_PATH, "wb") as model_file:

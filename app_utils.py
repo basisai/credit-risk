@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 import streamlit as st
 
+from xai_fairness.toolkit import compute_shap_values
+
 
 @st.cache(allow_output_mutation=True)
 def load_model(filename):
@@ -10,17 +12,18 @@ def load_model(filename):
 
 
 @st.cache(allow_output_mutation=True)
-def load_data(filename, num_rows=None):
-    df = pd.read_parquet(filename)
-    if num_rows is not None:
-        return df.iloc[:num_rows]
-    return df
+def load_data(filename, sample_size=None, random_state=0):
+    df = pd.read_csv(filename)
+    if sample_size is None:
+        return df
+    return df.sample(sample_size, random_state=random_state)
 
 
 @st.cache(allow_output_mutation=True)
 def predict(clf, x):
-    """
-    For classification, predict probabilities.
-    For regression, predict scores.
-    """
     return clf.predict_proba(x)[:, 1]
+
+
+@st.cache(allow_output_mutation=True)
+def compute_shap(clf, x):
+    return compute_shap_values(x, model=clf, model_type="tree")

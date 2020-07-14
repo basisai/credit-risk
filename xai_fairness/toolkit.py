@@ -34,10 +34,10 @@ def compute_shap_values(
     :param: Optional[int] kmeans_size: Number of k-means clusters. Only required for explaining generic
         predict_func
     :return Tuple[list(numpy.array), numpy_array]: shap_values, base_value.
-    len(base_value) must be the same as len(shap_values)
+    len(base_value) == len(shap_values)
     """
     if model_type == "tree":
-        explainer = shap.TreeExplainer(model, data=bkgrd_data)
+        explainer = shap.TreeExplainer(model, feature_perturbation="interventional")
     else:
         if bkgrd_data is None:
             raise ValueError("Non tree model requires background data")
@@ -46,31 +46,37 @@ def compute_shap_values(
         else:
             explainer = _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size)
 
-    shap_values = explainer.shap_values(x)
-    base_value = explainer.expected_value
-    return check_values(shap_values, base_value)
+    return _compute_shap(explainer, x)
 
 
-def _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size):
+def _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size=10):
     if predict_func is None:
         raise ValueError("No target to compute shap values. Expected either model or predict_func")
     # rather than use the whole training set to estimate expected values,
     # summarize with a set of weighted kmeans, each weighted by
     # the number of points they represent.
-    x_bkgrd_summary = shap.kmeans(bkgrd_data, kmeans_size)
+    if kmeans_size is None:
+        x_bkgrd_summary = bkgrd_data
+    else:
+        x_bkgrd_summary = shap.kmeans(bkgrd_data, kmeans_size)
     return shap.KernelExplainer(predict_func, x_bkgrd_summary)
 
 
-def check_values(shap_values, base_value):
-    """
-    Check shape of shap_values and base_value.
-    len(base_value) == len(shap_values) and type(shap_values) must be a list
-    :param numpy.array shap_values:
-    :param numpy.array base_value:
-    """
-    if isinstance(shap_values, np.ndarray) and len(shap_values.shape) == 2:
-        shap_values = [shap_values]
-    return shap_values, np.array(base_value).reshape(-1)
+def _compute_shap(explainer, x):
+    """Get shap_values and base_value."""
+    all_shap = explainer.shap_values(x)
+    all_base = np.array(explainer.expected_value).reshape(-1)
+
+    if len(all_base) == 1:
+        # regressor or binary XGBClassifier
+        return [all_shap], all_base
+
+    elif len(all_base) == 2:
+        # binary classifier, only take the values for class=1
+        return all_shap[1:], all_base[1:]
+
+    # multiclass classifier
+    return all_shap, all_base
 
 
 def compute_corrcoef(features, shap_values):

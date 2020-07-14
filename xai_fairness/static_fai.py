@@ -27,7 +27,7 @@ def plot_hist(source, cutoff):
     chart = base.mark_area(
         opacity=0.5, interpolate="step",
     ).encode(
-        alt.X("Prediction:Q", bin=alt.Bin(maxbins=20), title="Prediction"),
+        alt.X("Prediction:Q", bin=alt.Bin(maxbins=10), title="Prediction"),
         alt.Y("count()", stack=None),
         alt.Color(f"{var}:N"),
     )

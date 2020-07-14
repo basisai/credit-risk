@@ -94,33 +94,23 @@ def pdp_heatmap(pdp_interact_out, feature_names):
     return chart
 
 
-def get_top_features(shap_values, corrs, feature_names):
-    top_df = pd.DataFrame({
-        "feature": feature_names,
-        "value": np.abs(shap_values).mean(axis=0),
-        "corrcoef": corrs,
-    })
-    top_df.sort_values("value", ascending=False, inplace=True, ignore_index=True)
-    return top_df
-
-
-def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
+def xai_charts(corr_df, shap_values, x_valid, feature_names, max_display, max_rows=3000):
     st.write("**SHAP Summary Plots of Top Features**")
 
-    source = corr_df.copy()
+    source = corr_df.iloc[:max_display].copy()
     source["corr"] = source["corrcoef"].apply(lambda x: "positive" if x > 0 else "negative")
     chart = alt.Chart(source).mark_bar().encode(
-        alt.X("value:Q", title="mean(|SHAP value|) (average impact on model output magnitude)"),
+        alt.X("mas_value:Q", title="mean(|SHAP value|) (average impact on model output magnitude)"),
         alt.Y("feature:N", title="", sort="-x"),
         alt.Color("corr:N", scale=alt.Scale(
             domain=["positive", "negative"], range=["#FF0D57", "#1E88E5"])),
-        alt.Tooltip(["feature", "value"]),
+        alt.Tooltip(["feature", "mas_value"]),
     )
     st.altair_chart(chart, use_container_width=True)
 
     # TODO: convert to altair chart
-    shap.summary_plot(shap_values,
-                      x_valid,
+    shap.summary_plot(shap_values[:max_rows],
+                      x_valid.iloc[:max_rows],
                       feature_names=feature_names,
                       max_display=max_display,
                       plot_size=[12, 6],
@@ -129,39 +119,34 @@ def xai_charts(corr_df, x_valid, shap_values, feature_names, max_display):
     st.pyplot()
 
 
-def model_xai_summary(x_valid, all_shap_values, all_corrs, feature_names, config, is_multiclass):
-    if is_multiclass:
-        overall_top_df = pd.DataFrame({"feature": feature_names})
-        for lb, (shap_values, corrs) in enumerate(zip(all_shap_values, all_corrs)):
+def model_xai_summary(shap_summary_dfs, all_shap_values, x_valid, feature_names, config, is_multiclass):
+    overall_top_df = pd.DataFrame({"feature": feature_names})
+    for lb, df in enumerate(shap_summary_dfs):
+        if is_multiclass:
             st.subheader(f"Target Class `{lb}`")
-            top_df = get_top_features(shap_values, corrs, feature_names)
-            overall_top_df = pd.merge(overall_top_df, top_df[["feature", "value"]], on="feature")
 
-            xai_charts(top_df.iloc[:config["num_top_features"]],
-                       x_valid,
-                       shap_values,
-                       feature_names,
-                       config["num_top_features"])
+        top_df = shap_summary_dfs[lb].sort_values("mas_value", ascending=False, ignore_index=True)
+        overall_top_df = pd.merge(overall_top_df, top_df[["feature", "mas_value"]], on="feature")
+        xai_charts(top_df,
+                   all_shap_values[lb],
+                   x_valid,
+                   feature_names,
+                   config["num_top_features"])
 
+    if is_multiclass:
         overall_top_df["total_val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
         overall_top_df.sort_values("total_val", ascending=False, inplace=True, ignore_index=True)
         top_features = overall_top_df["feature"].iloc[:config["num_top_features"]].tolist()
         return top_features, None
 
-    # Get top features by shap_values
-    top_df = (
-        get_top_features(all_shap_values[0], all_corrs[0], feature_names)
-        .iloc[:config["num_top_features"]]
-    )
-    xai_charts(top_df,
-               x_valid,
-               all_shap_values[0],
-               feature_names,
-               config["num_top_features"])
-
+    top_df = top_df.iloc[:config["num_top_features"]]
     top_features = top_df["feature"].tolist()
     st.write("The top features are `" + "`, `".join(top_features[:5]) + "`.")
-    return top_features, top_df
+    dict_feats = {
+        "pos": top_df.query("corrcoef > 0")["feature"].values,
+        "neg": top_df.query("corrcoef < 0")["feature"].values,
+    }
+    return top_features, dict_feats
 
 
 def make_source_dp(shap_values, features, feature_names, feature):
