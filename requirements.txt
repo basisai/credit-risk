@@ -1,10 +1,10 @@
 aif360==0.3.0
 altair==4.1.0
-numpy==1.18.5
+numpy==1.19.1
 lightgbm==2.3.1
 pandas==1.0.3
 scikit-learn==0.23.1
-streamlit==0.61.0
+streamlit==0.63.1
 PDPbox==0.2.0
 shap==0.35.0
 seaborn==0.10.1
