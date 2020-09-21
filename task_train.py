@@ -15,6 +15,7 @@ import xgboost as xgb
 import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
+from bedrock_client import bdrk
 
 from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, CONFIG_FAI
 from preprocess.utils import load_data, get_execution_date
@@ -81,13 +82,22 @@ def compute_log_metrics(clf, x_val, y_val):
           f"  ROC AUC           = {roc_auc:.4f}\n"
           f"  Average precision = {avg_prc:.4f}")
 
+    # Remove BedrockApi client instantiation
+    #   - Replaced by `bdrk.init` (see `bedrock_main` below).
+    #   - Simplifies user code to not have to pass the API client object
+    #     around.
+    #   - Layer of indirection to facilitate migrating to new backend routes
+    #     without disrupting existing orchestration users (who may continue to
+    #     use `BedrockApi`).
+    #   - Con: Cannot concurrently log to different backend servers, projects,
+    #     or runs in the same program.
+
     # Log metrics
-    bedrock = BedrockApi(logging.getLogger(__name__))
-    bedrock.log_metric("Accuracy", acc)
-    bedrock.log_metric("ROC AUC", roc_auc)
-    bedrock.log_metric("Avg precision", avg_prc)
-    bedrock.log_chart_data(y_val.astype(int).tolist(),
-                           y_prob.flatten().tolist())
+    bdrk.log_metric("Accuracy", acc)
+    bdrk.log_metric("ROC AUC", roc_auc)
+    bdrk.log_metric("Avg precision", avg_prc)
+    bdrk.log_chart_data(y_val.astype(int).tolist(),
+                        y_prob.flatten().tolist())
 
     # Calculate and upload xafai metrics
     analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
@@ -147,12 +157,143 @@ def trainer(execution_date):
     from shutil import copyfile
     copyfile("output/test.gz.parquet", "/artefact/test.gz.parquet")
 
+    # log_model: Uploads a model artefact that has been saved to a local path.
+    #   - `path` is the local path that will be zipped and uploaded.
+    #   - Model is uploaded for the step and should only be called once per
+    #     step. Repeated calls result in an error.
+    #   - For orchestrated runs:
+    #       - Phase 1: Optional. No-op if present.
+    #       - Phase 2: Optional. If present, does the upload and suppresses
+    #         automatic upload from /artefact (by the Geophone sidecar).
+    #       - Phase 3: Required.
+    #       - Note: Step artefacts will continue to be aggregated in the final
+    #         step of orchestrated runs. Multistep is not currently supported
+    #         when using client library.
+    bdrk.log_model(path="/artefact")
+
+# To be confirmed with DS if needed now.
+# Q: How to extend client library to support aggregating artefacts across
+#    different steps?
+#   - Option 1A: When exiting `bdrk.start_run` block for final step, i.e. at
+#     the point where run = SUCCEEDED, the client library performs Geophone's
+#     functionality of aggregating step artefacts and re-uploading.
+#   - Option 1B: Same as 1A but performed by Bedrock instead of client library.
+#     Requires Bedrock to have access to storage.
+#   - Option 2A: We let the user self-manage the aggregation via GCS/S3.
+#   - Option 2B: We let the user self-manage the aggregation via new bdrk
+#     functions to upload/download arbitrary run artefacts.
+#   - Option 3: Do not aggregate; step artefacts have to be downloaded
+#     separately. (Requires change in IA)
 
 def main():
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
     trainer(execution_date)
 
+def bedrock_main():
+    # init: Initialise bedrock library.
+    #   - Repeated calls will update the existing configuration.
+    bdrk.init(
+        server_uri="api.bdrk.ai",
+        api_token="...",         # Can be a personal or app access token.
+        environment="staging",   # Tells Bedrock where to upload artefacts to.
+        project="my-project",    # Project has to be created ahead of time via
+                                 #   UI or API, so that proper permissions can
+                                 #   be assigned.
+        logger=None)
+
+    # `init` is optional for orchestrated runs:
+    #   - Automatically called with no params when any `bdrk` function is used.
+    #   - Will use env vars for params that are unspecified: server_uri,
+    #     api_token, environment, project.
+    #   - If explicitly called, mismatch between parameters and env vars will
+    #     fail the run. (This avoids any confusion when reviewing the executed
+    #     code.)
+    #   - In the future, we can consider making this required to be more
+    #     consistent across runtimes.
+
+    # start_run: Dynamically get/create pipeline + model, and start a new run
+    #            with a single step.
+    with bdrk.start_run(
+        pipeline="my-pipeline",  # Pipeline can be created dynamically, in
+                                 #   which case the model collection will have
+                                 #   the same name/ID.
+    ):
+        # Q: The Model Collection is currently hidden for the Training Pipeline
+        #    flow. Is the the Model Collection still a useful concept? If yes,
+        #    should it be created separately?
+
+        # Run and step status updates:
+        #   - RUNNING, when entering this block.
+        #   - STOPPED, when exiting from this block with a KeyboardInterrupt.
+        #   - FAILED, when exiting from this block with another exception.
+        #   - SUCCEEDED, when exiting from this block without exceptions.
+        #   - Bedrock will create a new Model Version on run SUCCEEDED.
+        #   - If program terminates without exiting the block, e.g. OOM killed,
+        #     then the user has to update the run status via UI. (We can look
+        #     into implementing signal handlers in the future.)
+
+        # `start_run` is optional for orchestrated runs:
+        #   - No-op, since pipeline/model/run creation and status updates are
+        #     handled by Bedrock.
+        #   - Will use env vars for params that are unspecified: pipeline.
+        #   - If explicitly called, mismatch between parameters and env vars
+        #     will fail the run. (This avoids any confusion when reviewing the
+        #     executed code.)
+        #   - In the future, we can consider making this required to be more
+        #     consistent across runtimes.
+
+        # log_param: Log a key-value pair representing a script parameter.
+        #   - Overwrites existing keys.
+        #   - For orchestrated runs, parameters passed via env var will
+        #     automatically be logged.
+        bdrk.log_param("MODEL_VER", MODEL_VER)
+        bdrk.log_param("NUM_LEAVES", NUM_LEAVES)
+        bdrk.log_param("MAX_DEPTH", MAX_DEPTH)
+
+        main()
 
 if __name__ == "__main__":
-    main()
+    bedrock_main()
+
+
+# Ideas only -- not needed for now
+# Q: How to extend client library to support multistep DAG visualisation?
+def bedrock_multistep_main():
+    bdrk.init(...)
+
+    # First step:
+    #   - Declare run DAG using `step_dependencies`. For production runs, the
+    #     user knows the step DAG ahead of time. Any deviation represents
+    #     some wrong assumptions made, and will result in the run failing.
+    #   - Leave `run` param blank since it will be assigned by Bedrock.
+    #   - Specify `step` param since this won't change.
+    dag = {"a": [], "b": ["a"], "c": ["b"]}
+    with bdrk.start_run(
+        step_dependencies=dag,
+        pipeline="my-pipeline",
+        run=None,
+        step="a"
+    ):
+        pass
+
+    # Subsequent steps call `start_run` with RUN_ID from initial step and
+    # configured step ID.
+    RUN_ID = "3"
+    with bdrk.start_run(pipeline="my-pipeline", run=RUN_ID, step="b"):
+        pass
+
+    # Q: How to coordinate run ID between steps?
+    #   - Option 1: User is responsible for propagating run ID from Bedrock's
+    #     response to downstream steps (as above).
+    #   - Option 2: User generates unique token that is shared by all steps
+    #     belonging to the same run, and passed to `bdrk.start_run`.
+
+    # Q: How to support step retry attempts?
+    #   - Option 1: `start_run` requires an `attempt` param, and user is
+    #     responsible for setting the correct value.
+    #   - Option 2: `start_run` does not require an `attempt` param. Repeated
+    #     calls with same step ID will terminate previous attempt with FALIURE
+    #     and start a new attempt.
+
+# Q: Unify ModelAnalyzer and ModelMonitoringService under bdrk module?
