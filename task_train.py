@@ -171,20 +171,6 @@ def trainer(execution_date):
     #         when using client library.
     bdrk.log_model(path="/artefact")
 
-# To be confirmed with DS if needed now.
-# Q: How to extend client library to support aggregating artefacts across
-#    different steps?
-#   - Option 1A: When exiting `bdrk.start_run` block for final step, i.e. at
-#     the point where run = SUCCEEDED, the client library performs Geophone's
-#     functionality of aggregating step artefacts and re-uploading.
-#   - Option 1B: Same as 1A but performed by Bedrock instead of client library.
-#     Requires Bedrock to have access to storage.
-#   - Option 2A: We let the user self-manage the aggregation via GCS/S3.
-#   - Option 2B: We let the user self-manage the aggregation via new bdrk
-#     functions to upload/download arbitrary run artefacts.
-#   - Option 3: Do not aggregate; step artefacts have to be downloaded
-#     separately. (Requires change in IA)
-
 def main():
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
@@ -219,10 +205,6 @@ def bedrock_main():
                                  #   which case the model collection will have
                                  #   the same name/ID.
     ):
-        # Q: The Model Collection is currently hidden for the Training Pipeline
-        #    flow. Is the the Model Collection still a useful concept? If yes,
-        #    should it be created separately?
-
         # Run and step status updates:
         #   - RUNNING, when entering this block.
         #   - STOPPED, when exiting from this block with a KeyboardInterrupt.
@@ -255,45 +237,3 @@ def bedrock_main():
 
 if __name__ == "__main__":
     bedrock_main()
-
-
-# Ideas only -- not needed for now
-# Q: How to extend client library to support multistep DAG visualisation?
-def bedrock_multistep_main():
-    bdrk.init(...)
-
-    # First step:
-    #   - Declare run DAG using `step_dependencies`. For production runs, the
-    #     user knows the step DAG ahead of time. Any deviation represents
-    #     some wrong assumptions made, and will result in the run failing.
-    #   - Leave `run` param blank since it will be assigned by Bedrock.
-    #   - Specify `step` param since this won't change.
-    dag = {"a": [], "b": ["a"], "c": ["b"]}
-    with bdrk.start_run(
-        step_dependencies=dag,
-        pipeline="my-pipeline",
-        run=None,
-        step="a"
-    ):
-        pass
-
-    # Subsequent steps call `start_run` with RUN_ID from initial step and
-    # configured step ID.
-    RUN_ID = "3"
-    with bdrk.start_run(pipeline="my-pipeline", run=RUN_ID, step="b"):
-        pass
-
-    # Q: How to coordinate run ID between steps?
-    #   - Option 1: User is responsible for propagating run ID from Bedrock's
-    #     response to downstream steps (as above).
-    #   - Option 2: User generates unique token that is shared by all steps
-    #     belonging to the same run, and passed to `bdrk.start_run`.
-
-    # Q: How to support step retry attempts?
-    #   - Option 1: `start_run` requires an `attempt` param, and user is
-    #     responsible for setting the correct value.
-    #   - Option 2: `start_run` does not require an `attempt` param. Repeated
-    #     calls with same step ID will terminate previous attempt with FALIURE
-    #     and start a new attempt.
-
-# Q: Unify ModelAnalyzer and ModelMonitoringService under bdrk module?
