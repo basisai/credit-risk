@@ -206,12 +206,13 @@ def bedrock_main():
     #   - In the future, we can consider making this required to be more
     #     consistent across runtimes.
 
-    # start_run: Dynamically get/create pipeline + model, and start a new run
-    #            with a single step.
+    # start_run: Dynamically get/create training pipeline + model, and start a
+    #            new run with a single step.
+    #   - If pipeline already exists, a new run will be created under it.
+    #   - If pipeline does not exist, a new pipeline and model collection will
+    #     be created first. The model will have the same ID as the pipeline.
     with bdrk.start_run(
-        pipeline="my-pipeline",  # Pipeline can be created dynamically, in
-                                 #   which case the model collection will have
-                                 #   the same name/ID.
+        pipeline="my-pipeline",  # Pipeline ID
     ):
         # Run and step status updates:
         #   - RUNNING, when entering this block.
