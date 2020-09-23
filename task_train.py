@@ -171,6 +171,14 @@ def trainer(execution_date):
     #         when using client library.
     bdrk.log_model(path="/artefact")
 
+    # download_model: Downloads artefacts for a Model Version.
+    #   - `path` is the destination path where artefacts are downloaded to.
+    #   - Note that `model` refers to Model Collection name.
+    bdrk.download_model(model="my-model-name", version=7, path="/model")
+
+    # log_model_dependency: Log an upstream Model Version for the current run.
+    bdrk.log_model_dependency(model="my-model-name", version=7)
+
 def main():
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
