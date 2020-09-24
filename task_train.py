@@ -172,12 +172,18 @@ def trainer(execution_date):
     bdrk.log_model(path="/artefact")
 
     # download_model: Downloads artefacts for a Model Version.
-    #   - `path` is the destination path where artefacts are downloaded to.
+    #   - `path` is the destination path where artefacts are downloaded to. If
+    #     unspecified, will use the current working directory.
+    #   - `log_dependency` specifies whether to log the downloaded Model
+    #     Version as an upstream dependency of the current run. A run can have
+    #     multiple upstream models.
     #   - Note that `model` refers to Model Collection name.
-    bdrk.download_model(model="my-model-name", version=7, path="/model")
+    bdrk.download_model(
+        model="my-model-name",
+        version=7,
+        path="/model",
+        log_dependency=True)
 
-    # log_model_dependency: Log an upstream Model Version for the current run.
-    bdrk.log_model_dependency(model="my-model-name", version=7)
 
 def main():
     execution_date = get_execution_date()
@@ -185,15 +191,14 @@ def main():
     trainer(execution_date)
 
 def bedrock_main():
-    # init: Initialise bedrock library.
+    # init: Initialise bedrock library and get/create project.
+    #   - If project does not exist, it will be created.
+    #   - Organisation is derived from user, which is from API token.
     #   - Repeated calls will update the existing configuration.
     bdrk.init(
-        server_uri="api.bdrk.ai",
-        api_token="...",         # Can be a personal or app access token.
+        access_token="...",
         environment="staging",   # Tells Bedrock where to upload artefacts to.
-        project="my-project",    # Project has to be created ahead of time via
-                                 #   UI or API, so that proper permissions can
-                                 #   be assigned.
+        project="my-project",
         logger=None)
 
     # `init` is optional for orchestrated runs:
@@ -210,9 +215,12 @@ def bedrock_main():
     #            new run with a single step.
     #   - If pipeline already exists, a new run will be created under it.
     #   - If pipeline does not exist, a new pipeline and model collection will
-    #     be created first. The model will have the same ID as the pipeline.
+    #     be created first.
+    #   - For existing pipeline ID, mismatch between model ID and `model`
+    #     param will result in run failure.
     with bdrk.start_run(
         pipeline="my-pipeline",  # Pipeline ID
+        model=None,              # Leave blank to use pipeline ID
     ):
         # Run and step status updates:
         #   - RUNNING, when entering this block.
