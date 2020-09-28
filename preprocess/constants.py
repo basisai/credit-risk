@@ -19,6 +19,10 @@ FEATURES = OHE_CAT_FEATS + NUMERIC_FEATS
 FEATURES = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in FEATURES]
 
 TARGET = 'TARGET'
+TARGET_NAMES = {
+    1: 'Default',
+    0: 'No default',
+}
 
 # Pruned features
 FEATURES_PRUNED = [
@@ -45,10 +49,14 @@ FEATURES_PRUNED = [
 CONFIG_FAI = {
     'CODE_GENDER': {
         'unprivileged_attribute_values': [0],
+        'unprivileged_group_name': 'Female',  # unprivileged group name corresponding to values=[0]
         'privileged_attribute_values': [1],
+        'privileged_group_name': 'Male',  # privileged group name corresponding to values=[1]
     },
     'NAME_EDUCATION_TYPE_Higher_education': {
         'unprivileged_attribute_values': [0],
+        'unprivileged_group_name': 'Non-degree holders',  # unprivileged group name corresponding to values=[0]
         'privileged_attribute_values': [1],
+        'privileged_group_name': 'Degree holders',  # privileged group name corresponding to values=[1]
     },
 }
