@@ -1,20 +1,21 @@
 """
 App for FAI.
 """
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
 import streamlit as st
-from sklearn import metrics
 
-from xai_fairness.static_fai import (
+from xai_fairness.toolkit_fai import (
     get_aif_metric,
+    get_perf_measure_by_group,
+)
+from xai_fairness.static_fai import (
     compute_fairness_measures,
     plot_confusion_matrix,
     plot_fmeasures_bar,
     color_red,
 )
-from xai_fairness.toolkit_fai import get_perf_measure_by_group
 
 from data.utils import load_model, load_data, predict, print_model_perf
 from preprocess.constants import FEATURES, TARGET, CONFIG_FAI

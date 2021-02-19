@@ -4,7 +4,11 @@ App for individual XAI.
 import altair as alt
 import streamlit as st
 
-from xai_fairness.static_xai import make_source_waterfall, waterfall_chart, plot_hist
+from xai_fairness.static_xai_indiv import (
+    make_source_waterfall,
+    waterfall_chart,
+    plot_hist,
+)
 
 from data.utils import load_model, load_data, predict
 from preprocess.constants import FEATURES, TARGET, TARGET_CLASSES
