@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 from sklearn import metrics
 
+
 @st.cache(allow_output_mutation=True)
 def load_model(filename):
     return pickle.load(open(filename, "rb"))
