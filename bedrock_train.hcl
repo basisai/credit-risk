@@ -2,7 +2,7 @@ version = "1.0"
 
 train {
     step preproc_agg {
-        image = "basisai/workload-standard:v0.1.2"
+        image = "basisai/workload-standard:v0.2.2"
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
@@ -15,7 +15,7 @@ train {
     }
 
     step features_trainer {
-        image = "basisai/workload-standard:v0.1.2"
+        image = "basisai/workload-standard:v0.2.2"
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
@@ -29,7 +29,7 @@ train {
     }
 
     step train {
-        image = "basisai/workload-standard:v0.1.2"
+        image = "basisai/workload-standard:v0.2.2"
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
@@ -69,11 +69,11 @@ serve {
 
 batch_score {
     step compute_shap {
-        image = "basisai/workload-standard:v0.1.2"
+        image = "basisai/workload-standard:v0.2.2"
         install = [
             "pip3 install --upgrade pip",
             "pip3 install -r requirements-train.txt",
-            "pip3 install shap==0.35.0",
+            "pip3 install shap==0.38.1",
         ]
         script = [{sh = ["python3 task_shap.py"]}]
         resources {

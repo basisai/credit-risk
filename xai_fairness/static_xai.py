@@ -6,22 +6,7 @@ import pandas as pd
 import shap
 import altair as alt
 import streamlit as st
-import matplotlib.pyplot as plt
 from pdpbox import pdp
-
-
-def convert_name(ind, feature_names):
-    """Get index of feature name if it is given."""
-    if isinstance(ind, str):
-        return np.where(np.array(feature_names) == ind)[0][0]
-    return ind
-
-
-def is_numeric(series, max_unique=16):
-    """Flag if series is numeric."""
-    if len(set(series.values[:3000])) > max_unique:
-        return True
-    return False
 
 
 @st.cache(allow_output_mutation=True)
@@ -94,63 +79,15 @@ def pdp_heatmap(pdp_interact_out, feature_names):
     return chart
 
 
-def xai_charts(corr_df, shap_values, x_valid, feature_names, max_display, max_rows=3000):
-    st.write("**SHAP Summary Plots of Top Features**")
-
-    source = corr_df.iloc[:max_display].copy()
-    source["corr"] = source["corrcoef"].apply(lambda x: "positive" if x > 0 else "negative")
-    chart = alt.Chart(source).mark_bar().encode(
-        alt.X("mas_value:Q", title="mean(|SHAP value|) (average impact on model output magnitude)"),
-        alt.Y("feature:N", title="", sort="-x"),
-        alt.Color("corr:N", scale=alt.Scale(
-            domain=["positive", "negative"], range=["#FF0D57", "#1E88E5"])),
-        alt.Tooltip(["feature", "mas_value"]),
-    )
-    st.altair_chart(chart, use_container_width=True)
-
-    # TODO: convert to altair chart
-    shap.summary_plot(shap_values[:max_rows],
-                      x_valid.iloc[:max_rows],
-                      feature_names=feature_names,
-                      max_display=max_display,
-                      plot_size=[12, 6],
-                      show=False)
-    plt.gcf().tight_layout()
-    st.pyplot()
-
-
-def model_xai_summary(shap_summary_dfs, all_shap_values, x_valid, feature_names, config, is_multiclass):
-    overall_top_df = pd.DataFrame({"feature": feature_names})
-    for lb, df in enumerate(shap_summary_dfs):
-        if is_multiclass:
-            st.subheader(f"Target Class `{lb}`")
-
-        top_df = shap_summary_dfs[lb].sort_values("mas_value", ascending=False, ignore_index=True)
-        overall_top_df = pd.merge(overall_top_df, top_df[["feature", "mas_value"]], on="feature")
-        xai_charts(top_df,
-                   all_shap_values[lb],
-                   x_valid,
-                   feature_names,
-                   config["num_top_features"])
-
-    if is_multiclass:
-        overall_top_df["total_val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
-        overall_top_df.sort_values("total_val", ascending=False, inplace=True, ignore_index=True)
-        top_features = overall_top_df["feature"].iloc[:config["num_top_features"]].tolist()
-        return top_features, None
-
-    top_df = top_df.iloc[:config["num_top_features"]]
-    top_features = top_df["feature"].tolist()
-    st.write("The top features are `" + "`, `".join(top_features[:5]) + "`.")
-    dict_feats = {
-        "pos": top_df.query("corrcoef > 0")["feature"].values,
-        "neg": top_df.query("corrcoef < 0")["feature"].values,
-    }
-    return top_features, dict_feats
+def _convert_name(ind, feature_names):
+    """Get index of feature name if it is given."""
+    if isinstance(ind, str):
+        return np.where(np.array(feature_names) == ind)[0][0]
+    return ind
 
 
 def make_source_dp(shap_values, features, feature_names, feature):
-    ind = convert_name(feature, feature_names)
+    ind = _convert_name(feature, feature_names)
 
     # randomize the ordering so plotting overlaps are not related to data ordering
     oinds = np.arange(shap_values.shape[0])
@@ -162,8 +99,15 @@ def make_source_dp(shap_values, features, feature_names, feature):
     })
 
 
+def _is_numeric(series, max_unique=16):
+    """Flag if series is numeric."""
+    if len(set(series.values[:3000])) > max_unique:
+        return True
+    return False
+
+
 def dependence_chart(source, feat_col, val_col="value"):
-    if is_numeric(source[feat_col]):
+    if _is_numeric(source[feat_col]):
         scatterplot = alt.Chart(source).mark_circle(size=8).encode(
             x=alt.X(f"{feat_col}:Q"),
             y=alt.Y(f"{val_col}:Q", title="SHAP value"),
@@ -198,23 +142,6 @@ def dependence_chart(source, feat_col, val_col="value"):
         stroke=None
     )
     return stripplot
-
-
-def model_xai_appendix(all_shap_values, x_valid, feature_names, top_features, is_multiclass):
-    features = x_valid.values
-
-    for feat_name in top_features:
-        st.subheader(f"Feature: `{feat_name}`")
-        title = ""
-        for lb, shap_values in enumerate(all_shap_values):
-            if is_multiclass:
-                title = f"Target Class {lb}"
-
-            source = make_source_dp(shap_values, features, feature_names, feat_name)
-            st.altair_chart(
-                dependence_chart(source, feat_name).properties(title=title),
-                use_container_width=False,
-            )
 
 
 def make_source_waterfall(instance, base_value, shap_values, max_display=10):
@@ -252,7 +179,7 @@ def make_source_waterfall(instance, base_value, shap_values, max_display=10):
 
 
 def waterfall_chart(source, decimal=3):
-    # set number of decimal places
+    """Plot waterfall chart."""
     source = source.copy()
     for c in ["feature_value", "shap_value"]:
         source[c] = source[c].round(decimal).astype(str)
@@ -287,6 +214,96 @@ def waterfall_chart(source, decimal=3):
         text='feature_value:N',
     )
     return bars + color1 + color2 + text
+
+
+def plot_hist(source):
+    """Plot custom histogram."""
+    base = alt.Chart(source)
+    chart = base.mark_area(
+        opacity=0.5, interpolate="step",
+    ).encode(
+        alt.X("Prediction:Q", bin=alt.Bin(maxbins=10), title="Prediction"),
+        alt.Y("count()", stack=None),
+    ).properties(
+        width=280,
+        height=200,
+    )
+    return chart
+
+
+###############################################################################
+# Additional
+def xai_charts(corr_df, shap_values, x_valid, feature_names, max_display, max_rows=3000):
+    """Plot global XAI charts."""
+    st.write("**SHAP Summary Plots of Top Features**")
+
+    source = corr_df.iloc[:max_display].copy()
+    source["corr"] = source["corrcoef"].apply(lambda x: "positive" if x > 0 else "negative")
+    chart = alt.Chart(source).mark_bar().encode(
+        alt.X("mas_value:Q", title="mean(|SHAP value|) (average impact on model output magnitude)"),
+        alt.Y("feature:N", title="", sort="-x"),
+        alt.Color("corr:N", scale=alt.Scale(
+            domain=["positive", "negative"], range=["#FF0D57", "#1E88E5"])),
+        alt.Tooltip(["feature", "mas_value"]),
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+    fig = shap_summary_plot(
+        shap_values[:max_rows],
+        x_valid.iloc[:max_rows],
+        feature_names=feature_names,
+        max_display=max_display,
+        plot_size=[12, 6],
+        show=False,
+    )
+    st.pyplot(fig)
+
+
+def model_xai_summary(shap_summary_dfs, all_shap_values, x_valid, feature_names, config, is_multiclass):
+    overall_top_df = pd.DataFrame({"feature": feature_names})
+    for lb, df in enumerate(shap_summary_dfs):
+        if is_multiclass:
+            st.subheader(f"Target Class `{lb}`")
+
+        top_df = shap_summary_dfs[lb].sort_values("mas_value", ascending=False, ignore_index=True)
+        overall_top_df = pd.merge(overall_top_df, top_df[["feature", "mas_value"]], on="feature")
+        xai_charts(top_df,
+                   all_shap_values[lb],
+                   x_valid,
+                   feature_names,
+                   config["num_top_features"])
+
+    if is_multiclass:
+        overall_top_df["total_val"] = overall_top_df.iloc[:, 1:].sum(axis=1)
+        overall_top_df.sort_values("total_val", ascending=False, inplace=True, ignore_index=True)
+        top_features = overall_top_df["feature"].iloc[:config["num_top_features"]].tolist()
+        return top_features, None
+
+    top_df = top_df.iloc[:config["num_top_features"]]
+    top_features = top_df["feature"].tolist()
+    st.write("The top features are `" + "`, `".join(top_features[:5]) + "`.")
+    dict_feats = {
+        "pos": top_df.query("corrcoef > 0")["feature"].values,
+        "neg": top_df.query("corrcoef < 0")["feature"].values,
+    }
+    return top_features, dict_feats
+
+
+def model_xai_appendix(all_shap_values, x_valid, feature_names, top_features, is_multiclass):
+    features = x_valid.values
+
+    for feat_name in top_features:
+        st.subheader(f"Feature: `{feat_name}`")
+        title = ""
+        for lb, shap_values in enumerate(all_shap_values):
+            if is_multiclass:
+                title = f"Target Class {lb}"
+
+            source = make_source_dp(shap_values, features, feature_names, feat_name)
+            st.altair_chart(
+                dependence_chart(source, feat_name).properties(title=title),
+                use_container_width=False,
+            )
 
 
 def indiv_xai(instance, base_value, shap_values, title="", max_display=10):

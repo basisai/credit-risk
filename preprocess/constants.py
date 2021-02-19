@@ -19,10 +19,7 @@ FEATURES = OHE_CAT_FEATS + NUMERIC_FEATS
 FEATURES = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in FEATURES]
 
 TARGET = 'TARGET'
-TARGET_NAMES = {
-    1: 'Default',
-    0: 'No default',
-}
+TARGET_CLASSES = [0, 1]  # 1 = Default
 
 # Pruned features
 FEATURES_PRUNED = [
