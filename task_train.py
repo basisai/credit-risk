@@ -17,9 +17,9 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, CONFIG_FAI
-from preprocess.utils import load_data, get_execution_date
+from preprocess.utils import load_data, get_execution_date, get_temp_bucket_prefix
 
-TMP_BUCKET = "gs://span-temp-production/"
+TMP_BUCKET = f"{get_temp_bucket_prefix()}"
 # TMP_BUCKET = "data/"
 
 MODEL_VER = os.getenv("MODEL_VER")
@@ -145,7 +145,7 @@ def trainer(execution_date):
 
     # To simulate redis, save to artefact
     from shutil import copyfile
-    copyfile("output/test.gz.parquet", "/artefact/test.gz.parquet")
+    copyfile("data/test.gz.parquet", "/artefact/test.gz.parquet")
 
 
 def main():

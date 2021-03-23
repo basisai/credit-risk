@@ -3,9 +3,9 @@ Script to perform preprocessing of credit_card_balance data.
 """
 import pandas as pd
 
-from preprocess.utils import load_data, onehot_enc
+from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = "s3://bedrock-sample/credit/"
+BUCKET = f"{get_bucket_prefix()}credit/"
 # BUCKET = "data/"
 
 CATEGORICAL_COLS = ['NAME_CONTRACT_STATUS']

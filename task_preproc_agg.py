@@ -2,6 +2,7 @@
 Script to preprocess and aggregate raw data.
 """
 from preprocess.utils import get_execution_date
+import os
 
 
 def preproc_raw(execution_date):

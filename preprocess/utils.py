@@ -14,7 +14,19 @@ def timer(title):
     t0 = time.time()
     yield
     print("  Time taken for {} = {:.0f}s".format(title, time.time() - t0))
-    
+
+
+def get_bucket_prefix():
+    return (
+        "s3://span-production-temp-data/" if os.getenv("ENV_TYPE") == "aws" else "gs://bedrock-sample/"
+    )
+
+
+def get_temp_bucket_prefix():
+    return (
+        "s3://span-production-temp-data/" if os.getenv("ENV_TYPE") == "aws" else "gs://span-temp-production/"
+    )
+
 
 def get_execution_date():
     """Get execution date using server time."""
@@ -46,15 +58,15 @@ def load_data(file_path, file_type="pd_csv"):
 def onehot_enc(df, categorical_columns, categories):
     """One-hot encoding of categorical columns."""
     noncategorical_cols = [col for col in df.columns if col not in categorical_columns]
-    
+
     enc = OneHotEncoder(categories=categories,
                         sparse=False,
                         handle_unknown='ignore')
     y = enc.fit_transform(df[categorical_columns].fillna("None"))
-    
+
     ohe_cols = [
         f"{col}_{c}" for col, cats in zip(categorical_columns, categories) for c in cats]
     df1 = pd.DataFrame(y, columns=ohe_cols)
-    
+
     output_df = pd.concat([df[noncategorical_cols], df1], axis=1)
     return output_df, ohe_cols
