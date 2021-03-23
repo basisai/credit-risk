@@ -3,9 +3,9 @@ Script to perform preprocessing of installments_payments data.
 """
 import pandas as pd
 
-from preprocess.utils import load_data
+from preprocess.utils import load_data, get_bucket_prefix
 
-BUCKET = "gs://bedrock-sample/credit/"
+BUCKET = f"{get_bucket_prefix()}bedrock-sample/credit/"
 # BUCKET = "data/"
 
 

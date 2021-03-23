@@ -3,9 +3,9 @@ Script to perform preprocessing of bureau and bureau_balance data.
 """
 import pandas as pd
 
-from preprocess.utils import load_data, onehot_enc
+from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = "gs://bedrock-sample/credit/"
+BUCKET = f"{get_bucket_prefix()}bedrock-sample/credit/"
 # BUCKET = "data/"
 
 BUREAU_CATEGORICAL_COLS = ['CREDIT_ACTIVE', 'CREDIT_CURRENCY', 'CREDIT_TYPE']
