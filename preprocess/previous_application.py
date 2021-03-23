@@ -4,7 +4,7 @@ Script to perform preprocessing of previous_application data.
 import numpy as np
 import pandas as pd
 
-from preprocess.utils import load_data, onehot_enc
+from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}bedrock-sample/credit/"
 # BUCKET = "data/"
