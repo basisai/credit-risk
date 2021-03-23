@@ -145,7 +145,7 @@ def trainer(execution_date):
 
     # To simulate redis, save to artefact
     from shutil import copyfile
-    copyfile("output/test.gz.parquet", "/artefact/test.gz.parquet")
+    copyfile("data/test.gz.parquet", "/artefact/test.gz.parquet")
 
 
 def main():
