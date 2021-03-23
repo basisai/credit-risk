@@ -5,7 +5,7 @@ import pandas as pd
 
 from preprocess.utils import load_data, onehot_enc
 
-BUCKET = "s3://bedrock-sample/credit/"
+BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
 
 BUREAU_CATEGORICAL_COLS = ['CREDIT_ACTIVE', 'CREDIT_CURRENCY', 'CREDIT_TYPE']

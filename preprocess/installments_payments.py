@@ -5,7 +5,7 @@ import pandas as pd
 
 from preprocess.utils import load_data
 
-BUCKET = "s3://bedrock-sample/credit/"
+BUCKET = "gs://bedrock-sample/credit/"
 # BUCKET = "data/"
 
 
