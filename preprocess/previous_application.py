@@ -6,7 +6,7 @@ import pandas as pd
 
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = f"{get_bucket_prefix()}bedrock-sample/credit/"
+BUCKET = f"{get_bucket_prefix()}credit/"
 # BUCKET = "data/"
 
 CATEGORICAL_COLS = [

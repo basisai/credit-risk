@@ -9,7 +9,7 @@ import pandas as pd
 from preprocess.constants import TARGET
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = f"{get_bucket_prefix()}bedrock-sample/credit/"
+BUCKET = f"{get_bucket_prefix()}credit/"
 # BUCKET = "data/"
 
 BINARY_MAP = {

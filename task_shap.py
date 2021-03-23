@@ -6,10 +6,10 @@ import pickle
 import pandas as pd
 import shap
 
-from preprocess.utils import get_execution_date, get_bucket_prefix
+from preprocess.utils import get_execution_date, get_temp_bucket_prefix
 from preprocess.constants import TARGET
 
-TMP_BUCKET = f"{get_bucket_prefix()}span-temp-production/"
+TMP_BUCKET = f"{get_temp_bucket_prefix()}"
 # TMP_BUCKET = "data/"
 
 

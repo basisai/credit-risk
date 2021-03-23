@@ -7,9 +7,9 @@ from preprocess.previous_application import previous_application
 from preprocess.pos_cash import pos_cash
 from preprocess.installments_payments import installments_payments
 from preprocess.credit_card_balance import credit_card_balance
-from preprocess.utils import timer, get_execution_date, get_bucket_prefix
+from preprocess.utils import timer, get_execution_date, get_temp_bucket_prefix
 
-TMP_BUCKET = f"{get_bucket_prefix()}span-temp-production/"
+TMP_BUCKET = f"{get_temp_bucket_prefix()}"
 # TMP_BUCKET = "data/"
 
 

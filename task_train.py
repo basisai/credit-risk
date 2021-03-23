@@ -17,9 +17,9 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, CONFIG_FAI
-from preprocess.utils import load_data, get_execution_date, get_bucket_prefix
+from preprocess.utils import load_data, get_execution_date, get_temp_bucket_prefix
 
-TMP_BUCKET = f"{get_bucket_prefix()}span-temp-production/"
+TMP_BUCKET = f"{get_temp_bucket_prefix()}"
 # TMP_BUCKET = "data/"
 
 MODEL_VER = os.getenv("MODEL_VER")

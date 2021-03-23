@@ -15,7 +15,6 @@ def preproc_raw(execution_date):
 
 
 def main():
-    print("Env vars", os.environ)
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
     preproc_raw(execution_date)
