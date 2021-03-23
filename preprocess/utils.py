@@ -18,7 +18,7 @@ def timer(title):
 
 def get_bucket_prefix():
     return (
-        "s3://span-production-temp-data/" if os.getenv("ENV_TYPE") == "aws" else "gs://bedrock-sample/"
+        "s3://bedrock-sample/" if os.getenv("ENV_TYPE") == "aws" else "gs://bedrock-sample/"
     )
 
 
