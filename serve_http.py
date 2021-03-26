@@ -19,8 +19,8 @@ redis = pd.read_parquet("/artefact/test.gz.parquet")
 def read_redis_features(sk_id):
     """Gets all the values from redis."""
     # Simulate querying redis
-    row = redis.query(f"SK_ID_CURR == '{sk_id}'")
-    if len(row) == 0:
+    row = redis.query(f"SK_ID_CURR == {sk_id}")
+    if row.empty:
         return None
     return row[feature_cols]
 
