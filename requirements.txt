@@ -4,4 +4,4 @@ fastparquet==0.5.0
 lightgbm==3.1.1
 numpy==1.20.1
 pandas==1.2.2
-streamlit==0.76.0
+streamlit==0.79.0

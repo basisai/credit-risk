@@ -22,8 +22,8 @@ def color_red(x):
     return "color: red" if x == "No" else "color: black"
 
 
-def plot_hist(source, cutoff):
-    """Plot custom histogram."""
+def histogram_chart(source, cutoff):
+    """Histogram chart."""
     source["Cutoff"] = cutoff
     var = source.columns[0]
     base = alt.Chart(source)
@@ -46,11 +46,11 @@ def plot_hist(source, cutoff):
     return chart + rule + mean
 
 
-def plot_fmeasures_bar(df, threshold):
-    """Plot custom bar chart."""
+def fmeasures_chart(df, lower, upper):
+    """Fairness metrics bar chart."""
     source = df.copy()
-    source["lbd"] = 1 - threshold
-    source["ubd"] = 1 + threshold
+    source["lbd"] = lower
+    source["ubd"] = upper
 
     base = alt.Chart(source)
     bars = base.mark_bar().encode(
@@ -71,8 +71,8 @@ def plot_fmeasures_bar(df, threshold):
     return bars + rule1 + rule2
 
 
-def plot_confusion_matrix(cm, title):
-    """Plot custom confusion matrix."""
+def confusion_matrix_chart(cm, title):
+    """Confusion matrix chart."""
     source = pd.DataFrame(
         [
             ["negative", "negative", cm["TN"]],
@@ -106,36 +106,32 @@ def plot_confusion_matrix(cm, title):
     return rects + text
 
 
-def custom_fmeasures(aif_metric, threshold=0.2, fairness_metrics=None):
-    """To customise fairness measures dataframe."""
+def alg_fai(aif_metric, threshold, fairness_metrics=None):
+    lower = 1 - threshold
+    upper = 1 / lower
+    st.write(f"Model is considered fair for the metric when **ratio is between {lower:.2f} and {upper:.2f}**.")
+
     fmeasures = compute_fairness_measures(aif_metric)
     if fairness_metrics is not None:
-        fmeasures = fmeasures.query(f"Metric == {fairness_metrics}")
-    fmeasures["Fair?"] = fmeasures["Ratio"].apply(
-        lambda x: "Yes" if np.abs(x - 1) < threshold else "No")
-    return fmeasures
+        fmeasures = fmeasures.query(f"Metric == {fairness_metrics}").copy()
+    fmeasures["Fair?"] = fmeasures["Ratio"].apply(lambda x: "Yes" if lower < x < upper else "No")
 
-
-def alg_fai(fmeasures, aif_metric, threshold):
-    st.write(f"Fairness is when **ratio is between {1 - threshold:.2f} and {1 + threshold:.2f}**.")
-
-    chart = plot_fmeasures_bar(fmeasures, threshold)
-    st.altair_chart(chart, use_container_width=True)
-
-    st.dataframe(
+    st.altair_chart(fmeasures_chart(fmeasures, lower, upper), use_container_width=True)
+    st.table(
         fmeasures[["Metric", "Unprivileged", "Privileged", "Ratio", "Fair?"]]
+        .set_index("Metric")
         .style.applymap(color_red, subset=["Fair?"])
         .format({"Unprivileged": "{:.3f}", "Privileged": "{:.3f}", "Ratio": "{:.3f}"})
     )
 
     st.subheader("Confusion Matrices")
     cm1 = aif_metric.binary_confusion_matrix(privileged=None)
-    c1 = plot_confusion_matrix(cm1, "All")
+    c1 = confusion_matrix_chart(cm1, "All")
     st.altair_chart(alt.concat(c1, columns=2), use_container_width=False)
     cm2 = aif_metric.binary_confusion_matrix(privileged=True)
-    c2 = plot_confusion_matrix(cm2, "Privileged")
+    c2 = confusion_matrix_chart(cm2, "Privileged")
     cm3 = aif_metric.binary_confusion_matrix(privileged=False)
-    c3 = plot_confusion_matrix(cm3, "Unprivileged")
+    c3 = confusion_matrix_chart(cm3, "Unprivileged")
     st.altair_chart(c2 | c3, use_container_width=False)
 
     st.header("Annex")
@@ -152,9 +148,7 @@ def alg_fai(fmeasures, aif_metric, threshold):
             tooltip=["Group", metric_name],
         )
         all_perfs.append(c)
-
-    all_charts = alt.concat(*all_perfs, columns=1)
-    st.altair_chart(all_charts, use_container_width=False)
+    st.altair_chart(alt.concat(*all_perfs, columns=1), use_container_width=False)
 
 
 def fairness_notes():

@@ -9,16 +9,17 @@ from dashboard.app_analysis import compare_models
 
 
 def main():
-    select = st.sidebar.selectbox("Select dashboard", [
+    st.sidebar.title("Credit Risk")
+    select = st.sidebar.radio("Select dashboard", [
         "Fairness",
-        "Individual XAI",
+        "Individual Explainability",
         "Credit Risk Analysis",
     ])
     st.title(select)
 
     if select == "Fairness":
         fai(debias=False)
-    elif select == "Individual XAI":
+    elif select == "Individual Explainability":
         xai_indiv()
     elif select == "Credit Risk Analysis":
         compare_models()

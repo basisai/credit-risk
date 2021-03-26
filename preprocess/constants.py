@@ -43,7 +43,7 @@ FEATURES_PRUNED = [
 ]
 
 
-CONFIG_FAI = {
+PROTECTED_FEATURES = {
     'CODE_GENDER': {
         'unprivileged_attribute_values': [0],
         'unprivileged_group_name': 'Female',  # unprivileged group name corresponding to values=[0]

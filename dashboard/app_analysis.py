@@ -122,7 +122,7 @@ def analyse_model():
         "Pred Proba of Default"))
 
     # st.subheader("Table of performance per tranche")
-    st.write(tranche_table)
+    st.table(tranche_table)
 
 
 def odds_chart(y_true, y_prob, y_baseline, num_bins):
@@ -150,7 +150,7 @@ def metrics_tables(y_true, y_prob, y_baseline, threshold):
     bl_bad_mean, bl_good_mean, bl_anova = anova_func(y_true, y_baseline, threshold)
     _, _, bl_ks = ks_func(y_true, y_baseline)
     bl_roc_auc, bl_gini, _, _, _ = roc_func(y_true, y_baseline)
-    st.write(pd.DataFrame(
+    st.table(pd.DataFrame(
         [
             [bad_mean, bl_bad_mean],
             [good_mean, bl_good_mean],
@@ -172,7 +172,7 @@ def stats_table(y_true, y_prob, y_baseline, threshold):
     df2 = acct_table(y_true, y_baseline, threshold, LOSS_PER_BAD_ACCT, REV_PER_GOOD_ACCT)
     df2.columns = ["Baseline Model"]
     output_df = df1.join(df2)
-    st.write(output_df)
+    st.table(output_df)
 
     x = output_df[output_df.index == "Total Profit"].values[0]
     st.write(f"Net Gain = `${x[0] - x[1]:.2f}`")
@@ -206,7 +206,7 @@ def compare_models():
     st.subheader("Swap set analysis")
     pct_above, pct_below, pct_swap_above, pct_swap_below, odds_swap_above, odds_swap_below = swapset(
         y_true, y_prob, y_baseline, accept_threshold)
-    st.write(pd.DataFrame(
+    st.table(pd.DataFrame(
         [[pct_below], [pct_above], [pct_swap_below], [pct_swap_above],
          [odds_swap_below], [odds_swap_above]],
         columns=[f"Probability cutoff = {accept_threshold:.2f}"],
