@@ -16,7 +16,7 @@ import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
-from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, CONFIG_FAI
+from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, PROTECTED_FEATURES
 from preprocess.utils import load_data, get_execution_date, get_temp_bucket_prefix
 
 TMP_BUCKET = f"{get_temp_bucket_prefix()}"
@@ -91,7 +91,7 @@ def compute_log_metrics(clf, x_val, y_val):
 
     # Calculate and upload xafai metrics
     analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
-    analyzer.fairness_config(CONFIG_FAI).test_labels(y_val).test_inference(y_pred)
+    analyzer.fairness_config(PROTECTED_FEATURES).test_labels(y_val).test_inference(y_pred)
     analyzer.analyze()
 
 
