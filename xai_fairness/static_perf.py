@@ -7,12 +7,12 @@ import pandas as pd
 import streamlit as st
 from sklearn import metrics
 
-from xai_fairness.toolkit_metrics import (
-    cumulative_gain_curve, cumulative_lift_curve, binary_ks_curve)
+from xai_fairness.toolkit_perf import (
+    cumulative_gain_curve, binary_ks_curve)
 
 
-def plot_confusion_matrix(source, title="Confusion matrix"):
-    """Plot confusion matrix."""
+def confusion_matrix_chart(source, title="Confusion matrix"):
+    """Confusion matrix."""
     base = alt.Chart(source).encode(
         x="predicted:O",
         y="actual:O",
@@ -34,8 +34,8 @@ def plot_confusion_matrix(source, title="Confusion matrix"):
     return rects + text
 
 
-def plot_roc(fpr, tpr, title="ROC curve"):
-    """Plot ROC curve."""
+def roc_chart(fpr, tpr, title="ROC curve"):
+    """ROC curve."""
     source = pd.DataFrame({"FPR": fpr, "TPR": tpr})
     base = alt.Chart(source).properties(title=title)
     line = base.mark_line(color="red").encode(
@@ -56,7 +56,8 @@ def plot_roc(fpr, tpr, title="ROC curve"):
     return line + area + baseline
 
 
-def _plot_line(source, xtitle, ytitle, title):
+def line_chart(source, xtitle, ytitle, title):
+    """General line chart."""
     base = alt.Chart(source).properties(title=title)
     line = base.mark_line().encode(
         alt.X("x:Q", title=xtitle),
@@ -66,39 +67,39 @@ def _plot_line(source, xtitle, ytitle, title):
     return line
 
 
-def plot_precision_recall(precision, recall, title="Precision-Recall curve"):
-    """Plot PR curve."""
+def precision_recall_chart(precision, recall, title="Precision-Recall curve"):
+    """PR curve."""
     source = pd.DataFrame({"x": recall, "y": precision})
-    return _plot_line(source, "Recall", "Precision", title=title)
+    return line_chart(source, "Recall", "Precision", title=title)
 
 
-def plot_cumulative_gain(percentages, gains, title="Cumulative gain curve"):
-    """Plot cumulative gain curve."""
+def cumulative_gain_chart(percentages, gains, title="Cumulative gain curve"):
+    """Cumulative gain curve."""
     source = pd.DataFrame({"x": percentages, "y": gains})
-    return _plot_line(source, "Percentage of samples selected",
+    return line_chart(source, "Percentage of samples selected",
                       "Percentage of positive labels", title=title)
 
 
-def plot_cumulative_lift(percentages, gains, title="Cumulative lift curve"):
-    """Plot cumulative lift curve."""
+def cumulative_lift_chart(percentages, gains, title="Cumulative lift curve"):
+    """Cumulative lift curve."""
     source = pd.DataFrame({"x": percentages, "y": gains})
-    return _plot_line(source, "Percentage of samples selected", "Lift", title=title)
+    return line_chart(source, "Percentage of samples selected", "Lift", title=title)
 
 
-def plot_recall_k(percentages, recall, title="Recall@K"):
-    """Plot recall@k curve."""
+def recall_k_chart(percentages, recall, title="Recall@K"):
+    """Recall@k curve."""
     source = pd.DataFrame({"x": percentages, "y": recall})
-    return _plot_line(source, "Percentage of samples selected", "Recall", title=title)
+    return line_chart(source, "Percentage of samples selected", "Recall", title=title)
 
 
-def plot_precision_k(percentages, precision, title="Precision@K"):
-    """Plot precision@k curve."""
+def precision_k_chart(percentages, precision, title="Precision@K"):
+    """Precision@k curve."""
     source = pd.DataFrame({"x": percentages, "y": precision})
-    return _plot_line(source, "Percentage of samples selected", "Precision", title=title)
+    return line_chart(source, "Percentage of samples selected", "Precision", title=title)
 
 
-def plot_ks_statistic(thresholds, pct0, pct1, max_dist_at, title="KS statistic curve"):
-    """Plot KS statistic curve."""
+def ks_statistic_chart(thresholds, pct0, pct1, max_dist_at, title="KS statistic curve"):
+    """KS statistic curve."""
     source = (
         pd.DataFrame({"Threshold": thresholds, "Class_0": pct0, "Class_1": pct1})
         .melt(id_vars=["Threshold"], var_name="Class", value_name="Value")
@@ -127,59 +128,58 @@ def classification_summary(actual, proba, predicted):
     cm = pd.DataFrame(cm, columns=labels)
     cm["actual"] = labels
     cm = cm.melt(id_vars=["actual"], var_name="predicted")
-    c1 = plot_confusion_matrix(cm).properties(
-        width=300, height=270,
-    )
     st.altair_chart(
-        c1,
+        confusion_matrix_chart(cm).properties(width=300, height=270),
         use_container_width=False,
     )
 
     fpr, tpr, _ = metrics.roc_curve(actual, proba)
     st.altair_chart(
-        plot_roc(fpr, tpr),
+        roc_chart(fpr, tpr),
         use_container_width=False,
     )
 
     precision, recall, _ = metrics.precision_recall_curve(actual, proba)
     st.altair_chart(
-        plot_precision_recall(precision, recall),
+        precision_recall_chart(precision, recall),
         use_container_width=False,
     )
 
     percentages, gains = cumulative_gain_curve(actual, proba)
     st.altair_chart(
-        plot_cumulative_gain(percentages, gains),
+        cumulative_gain_chart(percentages, gains),
         use_container_width=False,
     )
 
-    percentages, gains = cumulative_lift_curve(actual, proba)
+    idx = (percentages != 0)
+    percentages, gains = cumulative_lift_curve(percentages[idx], gains[idx] / percentages[idx])
     st.altair_chart(
-        plot_cumulative_lift(percentages, gains),
+        cumulative_lift_chart(percentages, gains),
         use_container_width=False,
     )
 
     # st.altair_chart(
-    #     plot_recall_k(percentages, recall),
+    #     recall_k_chart(percentages, recall),
     #     use_container_width=False,
     # )
 
     # st.altair_chart(
-    #     plot_precision_k(percentages, precision),
+    #     precision_k_chart(percentages, precision),
     #     use_container_width=False,
     # )
 
     thresholds, pct0, pct1, ks_stat, max_dist_at, _ = binary_ks_curve(
         actual, proba)
     st.altair_chart(
-        plot_ks_statistic(
+        ks_statistic_chart(
             thresholds, pct0, pct1, max_dist_at,
             title=f"KS statistic = {ks_stat:.4f}"),
         use_container_width=False,
     )
 
 
-def _plot_scatter(source, xtitle, ytitle, title):
+def scatter_chart(source, xtitle, ytitle, title):
+    """General scatter chart."""
     base = alt.Chart(source).properties(title=title)
     scatter = base.mark_circle(size=60).encode(
         alt.X("x:Q", title=xtitle),
@@ -189,17 +189,17 @@ def _plot_scatter(source, xtitle, ytitle, title):
     return scatter
 
 
-def plot_residual_predicted(predicted, residuals, title="Residual vs Predicted Values"):
-    """Plot residual vs predicted values curve."""
+def residual_predicted_chart(predicted, residuals, title="Residual vs Predicted Values"):
+    """Residual vs predicted values curve."""
     source = pd.DataFrame({"x": predicted, "y": residuals})
-    return _plot_scatter(source, "Prediction", "Residual", title=title)
+    return scatter_chart(source, "Prediction", "Residual", title=title)
 
 
 
-def plot_predicted_actual(actual, predicted, title="Predicted vs Actual Values"):
-    """Plot predicted vs actual values curve."""
+def predicted_actual_chart(actual, predicted, title="Predicted vs Actual Values"):
+    """Predicted vs actual values curve."""
     source = pd.DataFrame({"x": actual, "y": predicted})
-    scatter = _plot_scatter(source, "Actual", "Residual", title=title)
+    scatter = scatter_chart(source, "Actual", "Residual", title=title)
 
     vmin = source.min().min()
     vmax = source.max().max()
@@ -213,7 +213,7 @@ def plot_predicted_actual(actual, predicted, title="Predicted vs Actual Values")
 
 def regression_summary(actual, predicted):
     """Regression model performance."""
-    residuals = np.abs(actual - predicted)
+    residuals = predicted - actual
     st.altair_chart(
         plot_residual_predicted(predicted, residuals),
         use_container_width=False,

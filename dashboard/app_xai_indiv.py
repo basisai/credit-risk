@@ -7,7 +7,7 @@ import streamlit as st
 from xai_fairness.static_xai_indiv import (
     make_source_waterfall,
     waterfall_chart,
-    plot_hist,
+    histogram_chart,
 )
 
 from data.utils import load_model, load_data, predict
@@ -25,7 +25,7 @@ def xai_indiv():
     # TODO
     score_df = sample[[TARGET]].copy()
     score_df["Prediction"] = scores
-    charts = [plot_hist(score_df[score_df[TARGET] == lb]).properties(title=f"Class = {lb}")
+    charts = [histogram_chart(score_df[score_df[TARGET] == lb]).properties(title=f"Class = {lb}")
               for lb in TARGET_CLASSES]
     st.altair_chart(alt.concat(*charts, columns=2), use_container_width=True)
 

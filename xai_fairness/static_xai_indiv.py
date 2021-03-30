@@ -8,6 +8,7 @@ import streamlit as st
 
 
 def make_source_waterfall(instance, base_value, shap_values, max_display=10):
+    """Prepare dataframe for waterfall chart."""
     df = pd.melt(instance)
     df.columns = ["feature", "feature_value"]
     df["shap_value"] = shap_values
@@ -48,7 +49,7 @@ def make_source_waterfall(instance, base_value, shap_values, max_display=10):
 
 
 def waterfall_chart(source, decimal=3):
-    """Plot waterfall chart."""
+    """Waterfall chart."""
     source = source.copy()
     for c in ["feature_value", "shap_value"]:
         source[c] = source[c].round(decimal).astype(str)
@@ -85,8 +86,8 @@ def waterfall_chart(source, decimal=3):
     return bars + color1 + color2 + text
 
 
-def plot_hist(source):
-    """Plot custom histogram."""
+def histogram_chart(source):
+    """Histogram chart."""
     base = alt.Chart(source)
     chart = base.mark_area(
         opacity=0.5, interpolate="step",

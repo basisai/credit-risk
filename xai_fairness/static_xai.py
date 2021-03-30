@@ -1,10 +1,9 @@
 """
 Helpers for XAI
 """
+import altair as alt
 import numpy as np
 import pandas as pd
-import shap
-import altair as alt
 import streamlit as st
 from pdpbox import pdp
 
@@ -29,11 +28,14 @@ def pdp_chart(pdp_isolate_out, feature_name):
     })
 
     if pdp_isolate_out.feature_type == "numeric":
-        chart = alt.Chart(source).mark_line().encode(
+        base = alt.Chart(source).encode(
             x=alt.X("feature", title=feature_name),
             y=alt.Y("value", title=""),
             tooltip=["feature", "value"],
         )
+        line = base.mark_line()
+        scatter = base.mark_circle(size=60)
+        chart = line + scatter
     else:
         source["feature"] = source["feature"].astype(str)
         chart = alt.Chart(source).mark_bar().encode(
