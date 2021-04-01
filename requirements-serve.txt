@@ -1,4 +1,4 @@
-bdrk[model-monitoring]==0.7.2
+bdrk[model-monitoring]>=0.7.2
 fastparquet==0.5.0
 lightgbm==3.1.1
 scikit-learn==0.24.1
