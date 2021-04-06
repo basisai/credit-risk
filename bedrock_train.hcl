@@ -1,19 +1,6 @@
 version = "1.0"
 
 train {
-    step preproc_agg {
-        image = "basisai/workload-standard:v0.2.2"
-        install = [
-            "pip3 install --upgrade pip",
-            "pip3 install -r requirements-train.txt",
-        ]
-        script = [{sh = ["python3 task_preproc_agg.py"]}]
-        resources {
-            cpu = "0.5"
-            memory = "1G"
-        }
-    }
-
     step features_trainer {
         image = "basisai/workload-standard:v0.2.2"
         install = [
@@ -25,7 +12,6 @@ train {
             cpu = "2"
             memory = "12G"
         }
-         depends_on = ["preproc_agg"]
     }
 
     step train {

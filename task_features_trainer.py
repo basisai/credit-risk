@@ -9,8 +9,7 @@ from preprocess.installments_payments import installments_payments
 from preprocess.credit_card_balance import credit_card_balance
 from preprocess.utils import timer, get_execution_date, get_temp_bucket_prefix
 
-TMP_BUCKET = f"{get_temp_bucket_prefix()}"
-# TMP_BUCKET = "data/"
+TMP_BUCKET = get_temp_bucket_prefix()
 
 
 def generate_features(execution_date):

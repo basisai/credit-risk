@@ -11,7 +11,10 @@ BUCKET = f"{get_bucket_prefix()}credit/"
 CATEGORICAL_COLS = ['NAME_CONTRACT_STATUS']
 
 CATEGORIES = [
-    ['Active', 'Amortized debt', 'Approved', 'Canceled', 'Completed', 'Demand', 'Returned to the store', 'Signed', 'XNA'],
+    [
+        'Active', 'Amortized debt', 'Approved', 'Canceled', 'Completed', 'Demand',
+        'Returned to the store', 'Signed', 'XNA',
+    ],
 ]
 
 
@@ -35,4 +38,3 @@ def pos_cash():
     # Count pos cash accounts
     pos_agg['POS_COUNT'] = pos.groupby('SK_ID_CURR').size()
     return pos_agg
-

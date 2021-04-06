@@ -6,7 +6,6 @@ import pandas as pd
 from preprocess.utils import load_data, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}credit/"
-# BUCKET = "data/"
 
 
 def installments_payments():

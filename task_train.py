@@ -2,29 +2,28 @@
 Script to train model.
 """
 import logging
-import os
 import pickle
 import time
+from os import getenv
 
+import numpy as np
+import lightgbm as lgb
+import xgboost as xgb
 from bedrock_client.bedrock.analyzer.model_analyzer import ModelAnalyzer
 from bedrock_client.bedrock.analyzer import ModelTypes
 from bedrock_client.bedrock.api import BedrockApi
 from bedrock_client.bedrock.metrics.service import ModelMonitoringService
-import lightgbm as lgb
-import xgboost as xgb
-import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from preprocess.constants import FEATURES, FEATURES_PRUNED, TARGET, PROTECTED_FEATURES
 from preprocess.utils import load_data, get_execution_date, get_temp_bucket_prefix
 
-TMP_BUCKET = f"{get_temp_bucket_prefix()}"
-# TMP_BUCKET = "data/"
+TMP_BUCKET = get_temp_bucket_prefix()
 
-MODEL_VER = os.getenv("MODEL_VER")
-NUM_LEAVES = os.getenv("NUM_LEAVES")
-MAX_DEPTH = os.getenv("MAX_DEPTH")
+MODEL_VER = getenv("MODEL_VER")
+NUM_LEAVES = int(getenv("NUM_LEAVES"))
+MAX_DEPTH = int(getenv("MAX_DEPTH"))
 OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
@@ -38,8 +37,8 @@ def get_feats_to_use():
 def get_model():
     if MODEL_VER == "lightgbm" or MODEL_VER == "lightgbm-pruned":
         return lgb.LGBMClassifier(
-            num_leaves=int(NUM_LEAVES),
-            max_depth=int(MAX_DEPTH),
+            num_leaves=NUM_LEAVES,
+            max_depth=MAX_DEPTH,
             learning_rate=0.02,
             n_estimators=10000,
             colsample_bytree=0.9497036,
@@ -54,7 +53,7 @@ def get_model():
     elif MODEL_VER == "xgboost" or MODEL_VER == "xgboost-pruned":
         print("  NUM_LEAVES not used for xgboost model")
         return xgb.XGBClassifier(
-            max_depth=int(MAX_DEPTH),
+            max_depth=MAX_DEPTH,
             learning_rate=0.02,
             n_estimators=10000,
         )
@@ -90,7 +89,7 @@ def compute_log_metrics(clf, x_val, y_val):
                            y_prob.flatten().tolist())
 
     # Calculate and upload xafai metrics
-    analyzer = ModelAnalyzer(clf, 'tree_model', model_type=ModelTypes.TREE).test_features(x_val)
+    analyzer = ModelAnalyzer(clf, "tree_model", model_type=ModelTypes.TREE).test_features(x_val)
     analyzer.fairness_config(PROTECTED_FEATURES).test_labels(y_val).test_inference(y_pred)
     analyzer.analyze()
 
@@ -115,7 +114,7 @@ def trainer(execution_date):
     clf.fit(x_train,
             y_train,
             eval_set=[(x_train, y_train), (x_valid, y_valid)],
-            eval_metric='auc',
+            eval_metric="auc",
             verbose=200,
             early_stopping_rounds=200)
     print("  Time taken = {:.0f} s".format(time.time() - start))

@@ -7,7 +7,6 @@ import pandas as pd
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}credit/"
-# BUCKET = "data/"
 
 CATEGORICAL_COLS = [
     'NAME_CONTRACT_TYPE', 'WEEKDAY_APPR_PROCESS_START', 'FLAG_LAST_APPL_PER_CONTRACT',

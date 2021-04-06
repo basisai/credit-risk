@@ -6,7 +6,6 @@ import pandas as pd
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}credit/"
-# BUCKET = "data/"
 
 CATEGORICAL_COLS = ['NAME_CONTRACT_STATUS']
 
@@ -22,7 +21,7 @@ def credit_card_balance():
     cc, _ = onehot_enc(cc, CATEGORICAL_COLS, CATEGORIES)
 
     # General aggregations
-    cc.drop(['SK_ID_PREV'], axis= 1, inplace = True)
+    cc.drop(['SK_ID_PREV'], axis=1, inplace=True)
     cc_agg = cc.groupby('SK_ID_CURR').agg(['min', 'max', 'mean', 'sum', 'var'])
     cc_agg.columns = pd.Index(['CC_' + e[0] + "_" + e[1].upper() for e in cc_agg.columns.tolist()])
 

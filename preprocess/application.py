@@ -4,13 +4,10 @@ Script to perform preprocessing of application data.
 from datetime import timedelta
 
 import numpy as np
-import pandas as pd
 
-from preprocess.constants import TARGET
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}credit/"
-# BUCKET = "data/"
 
 BINARY_MAP = {
     'CODE_GENDER': ['F', 'M'],
@@ -77,9 +74,6 @@ def application(execution_date):
         load_data(file_path)
         .query("CODE_GENDER != 'XNA'")  # Remove applications with XNA CODE_GENDER
     )
-
-    # # Swap target
-    # raw_df[TARGET] = 1 - raw_df[TARGET]
 
     # Binarize
     for col, val in BINARY_MAP.items():

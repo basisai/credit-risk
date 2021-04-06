@@ -6,7 +6,6 @@ import pandas as pd
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
 BUCKET = f"{get_bucket_prefix()}credit/"
-# BUCKET = "data/"
 
 BUREAU_CATEGORICAL_COLS = ['CREDIT_ACTIVE', 'CREDIT_CURRENCY', 'CREDIT_TYPE']
 

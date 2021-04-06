@@ -9,8 +9,7 @@ import shap
 from preprocess.utils import get_execution_date, get_temp_bucket_prefix
 from preprocess.constants import TARGET
 
-TMP_BUCKET = f"{get_temp_bucket_prefix()}"
-# TMP_BUCKET = "data/"
+TMP_BUCKET = get_temp_bucket_prefix()
 
 
 def load_data(execution_date):
