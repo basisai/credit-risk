@@ -42,3 +42,8 @@ Similarly, from [Inference distribution](https://docs.basis-ai.com/guides/custom
 
 ## Credit risk analysis prototype
 The [Streamlit app](https://boiling-badlands-89141.herokuapp.com/) provides a demonstration of credit risk analysis.
+
+## Acknowledgements
+The data is from Kaggle's [Home Credit Default Risk competition](https://www.kaggle.com/c/home-credit-default-risk/data).
+
+The data processing and model training codes are adapted from this [Kaggle kernel](https://www.kaggle.com/jsaguiar/lightgbm-with-simple-features?scriptVersionId=6025993).
