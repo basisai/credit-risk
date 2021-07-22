@@ -6,7 +6,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from bedrock_client.bedrock.metrics.service import ModelMonitoringService
+from boxkite.monitoring.service import ModelMonitoringService
 from flask import Flask, Response, current_app, request
 
 model = pickle.load(open("/artefact/model.pkl", "rb"))
