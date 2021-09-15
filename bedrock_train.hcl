@@ -12,6 +12,9 @@ train {
             cpu = "2"
             memory = "12G"
         }
+        retry {
+            limit = "1"
+        }
     }
 
     step train {
@@ -24,6 +27,9 @@ train {
         resources {
             cpu = "2"
             memory = "14G"
+        }
+        retry {
+            limit = "1"
         }
         depends_on = ["features_trainer"]
     }
@@ -66,6 +72,9 @@ batch_score {
         resources {
             cpu = "2"
             memory = "14G"
+        }
+        retry {
+            limit = "1"
         }
     }
 
