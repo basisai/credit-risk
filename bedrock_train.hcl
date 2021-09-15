@@ -13,7 +13,7 @@ train {
       memory = "12G"
     }
     retry {
-      limit = "1"
+      limit = 1
     }
   }
 
@@ -29,7 +29,7 @@ train {
       memory = "14G"
     }
     retry {
-      limit = "1"
+      limit = 1
     }
     depends_on = ["features_trainer"]
   }
@@ -77,7 +77,7 @@ batch_score {
       memory = "14G"
     }
     retry {
-      limit = "1"
+      limit = 1
     }
   }
 
