@@ -1,7 +1,7 @@
 version = "1.0"
 
 train {
-  step features_trainer {
+  step "features_trainer" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
     install = [
       "pip3 install --upgrade pip",
@@ -17,7 +17,7 @@ train {
     }
   }
 
-  step train {
+  step "train" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
     install = [
       "pip3 install --upgrade pip",
@@ -64,7 +64,7 @@ serve {
 
 
 batch_score {
-  step compute_shap {
+  step "compute_shap" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
     install = [
       "pip3 install --upgrade pip",
