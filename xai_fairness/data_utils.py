@@ -3,22 +3,16 @@ Utility functions for streamlit app.
 """
 from distutils.util import strtobool
 
-import numpy as np
-import pandas as pd
-import streamlit as st
-
-from xai_fairness.toolkit_xai import get_explainer, compute_shap
-
 
 class DataInputs:
     def __init__(
-            self,
-            config,
-            feature_names,
-            target_name,
-            target_classes=None,
-            protected_features=None,
-        ):
+        self,
+        config,
+        feature_names,
+        target_name,
+        target_classes=None,
+        protected_features=None,
+    ):
         """
         Data for the dashboard.
 
@@ -46,13 +40,23 @@ class DataInputs:
         self.true_class = None
         self.pred_class = None
         self.max_rows = 3000
-        self.has_fai = bool(protected_features.keys()) if protected_features is not None else False
+        self.has_fai = (
+            bool(protected_features.keys())
+            if protected_features is not None
+            else False
+        )
 
     def model(self, model):
         self.model = model
         return self
 
-    def xai_data(self, shap_summary_dfs, shap_sample_dfs, base_values, pred_sample_df):
+    def xai_data(
+        self,
+        shap_summary_dfs,
+        shap_sample_dfs,
+        base_values,
+        pred_sample_df,
+    ):
         """
         Sample validation data for generating XAI plots only.
         Data will be limited by sampling 3000 rows randomly.
@@ -75,10 +79,12 @@ class DataInputs:
         """
         To be used for fairness
         The classes need not correspond to the original target variable.
-        Eg, for regression, one can bin the scores to classes for computing fairness metrics.
+        Eg, for regression, one can bin the scores to classes for computing
+        fairness metrics.
 
         Args:
-            valid_fai pd.DataFrame: validation data containing protected feature columns
+            valid_fai pd.DataFrame: validation data containing protected
+            feature columns
             indicated in protected_features
             true_class numpy.array: actual labels
             pred_class numpy.array: labels from predicted scores
@@ -93,13 +99,20 @@ class DataInputs:
             raise AttributeError("Data for fairness is missing")
 
         if self.ml_type not in ["regression", "classification"]:
-            raise ValueError("ml_type has to be either 'regression' or 'classification'")
+            raise ValueError(
+                "ml_type has to be either 'regression' or 'classification'")
 
         if self.ml_type == "regression" and self.is_multiclass:
-            raise ValueError("ml_type is set as 'regression' and is_multiclass is set as True")
+            raise ValueError(
+                "ml_type is set as 'regression' and "
+                "is_multiclass is set as True"
+            )
 
         if self.is_multiclass and len(self.target_classes) < 3:
-            raise ValueError("is_multiclass is set as True but there are less than 3 target classes")
+            raise ValueError(
+                "is_multiclass is set as True but there are "
+                "less than 3 target classes"
+            )
 
 
 def sampling(df, max_rows=3000, random_state=0):

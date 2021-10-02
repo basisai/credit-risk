@@ -1,3 +1,4 @@
+# flake8: noqa
 """
 Helpers for fairness
 """
@@ -6,7 +7,7 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 
-from xai_fairness.toolkit_fai import (
+from .toolkit_fai import (
     compute_fairness_measures,
     get_perf_measure_by_group,
 )
@@ -80,12 +81,12 @@ def confusion_matrix_chart(cm, title):
             ["positive", "negative", cm["FN"]],
             ["positive", "positive", cm["TP"]],
         ],
-        columns=["actual", "predicted", "value"],
+        columns=["Actual", "Predicted", "value"],
     )
 
     base = alt.Chart(source).encode(
-        y="actual:O",
-        x="predicted:O",
+        x="Predicted:O",
+        y="Actual:O",
     ).properties(
         width=200,
         height=200,
@@ -106,7 +107,7 @@ def confusion_matrix_chart(cm, title):
     return rects + text
 
 
-def alg_fai(aif_metric, threshold, fairness_metrics=None):
+def alg_fai(aif_metric, threshold, fairness_metrics=None, additional = 0):
     lower = 1 - threshold
     upper = 1 / lower
     st.write(f"Model is considered fair for the metric when **ratio is between {lower:.2f} and {upper:.2f}**.")
@@ -117,38 +118,38 @@ def alg_fai(aif_metric, threshold, fairness_metrics=None):
     fmeasures["Fair?"] = fmeasures["Ratio"].apply(lambda x: "Yes" if lower < x < upper else "No")
 
     st.altair_chart(fmeasures_chart(fmeasures, lower, upper), use_container_width=True)
-    st.table(
-        fmeasures[["Metric", "Unprivileged", "Privileged", "Ratio", "Fair?"]]
-        .set_index("Metric")
-        .style.applymap(color_red, subset=["Fair?"])
-        .format({"Unprivileged": "{:.3f}", "Privileged": "{:.3f}", "Ratio": "{:.3f}"})
-    )
-
-    st.subheader("Confusion Matrices")
-    cm1 = aif_metric.binary_confusion_matrix(privileged=None)
-    c1 = confusion_matrix_chart(cm1, "All")
-    st.altair_chart(alt.concat(c1, columns=2), use_container_width=False)
-    cm2 = aif_metric.binary_confusion_matrix(privileged=True)
-    c2 = confusion_matrix_chart(cm2, "Privileged")
-    cm3 = aif_metric.binary_confusion_matrix(privileged=False)
-    c3 = confusion_matrix_chart(cm3, "Unprivileged")
-    st.altair_chart(c2 | c3, use_container_width=False)
-
-    st.header("Annex")
-    st.subheader("Performance Metrics")
-    all_perfs = []
-    for metric_name in [
-            "TPR", "TNR", "FPR", "FNR", "PPV", "NPV", "FDR", "FOR", "ACC",
-            "selection_rate", "precision", "recall", "sensitivity",
-            "specificity", "power", "error_rate"]:
-        df = get_perf_measure_by_group(aif_metric, metric_name)
-        c = alt.Chart(df).mark_bar().encode(
-            x=f"{metric_name}:Q",
-            y="Group:O",
-            tooltip=["Group", metric_name],
+    if additional == 1:
+        st.table(
+            fmeasures[["Metric", "Unprivileged", "Privileged", "Ratio", "Fair?"]]
+            .set_index("Metric")
+            .style.applymap(color_red, subset=["Fair?"])
+            .format({"Unprivileged": "{:.3f}", "Privileged": "{:.3f}", "Ratio": "{:.3f}"})
         )
-        all_perfs.append(c)
-    st.altair_chart(alt.concat(*all_perfs, columns=1), use_container_width=False)
+
+        st.subheader("Confusion Matrices")
+        cm1 = aif_metric.binary_confusion_matrix(privileged=None)
+        c1 = confusion_matrix_chart(cm1, "All")
+        st.altair_chart(alt.concat(c1, columns=2), use_container_width=False)
+        cm2 = aif_metric.binary_confusion_matrix(privileged=True)
+        c2 = confusion_matrix_chart(cm2, "Privileged")
+        cm3 = aif_metric.binary_confusion_matrix(privileged=False)
+        c3 = confusion_matrix_chart(cm3, "Unprivileged")
+        st.altair_chart(c2 | c3, use_container_width=False)
+
+    with st.expander("Performance Metrics"):
+        all_perfs = []
+        for metric_name in [
+                "TPR", "TNR", "FPR", "FNR", "PPV", "NPV", "FDR", "FOR", "ACC",
+                "selection_rate", "precision", "recall", "sensitivity",
+                "specificity", "power", "error_rate"]:
+            df = get_perf_measure_by_group(aif_metric, metric_name)
+            c = alt.Chart(df).mark_bar().encode(
+                x=f"{metric_name}:Q",
+                y="Group:O",
+                tooltip=["Group", metric_name],
+            )
+            all_perfs.append(c)
+        st.altair_chart(alt.concat(*all_perfs, columns=1), use_container_width=False)
 
 
 def fairness_notes():

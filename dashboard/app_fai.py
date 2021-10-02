@@ -1,20 +1,17 @@
 """
 App for FAI.
 """
-import altair as alt
-import numpy as np
 import pandas as pd
 import streamlit as st
 
 from xai_fairness.toolkit_fai import (
     get_aif_metric,
-    get_perf_measure_by_group,
     compute_fairness_measures,
 )
 from xai_fairness.static_fai import (
     alg_fai,
-    confusion_matrix_chart,
     fmeasures_chart,
+    fairness_notes,
 )
 
 from data.utils import load_model, load_data, predict, print_model_perf
@@ -49,7 +46,8 @@ def prepare_pred(x_valid, y_valid, debias=False):
 
 
 def fai(debias=False):
-    protected_attribute = st.selectbox("Select protected column.", list(PROTECTED_FEATURES.keys()))
+    protected_attribute = st.selectbox(
+        "Select protected column.", list(PROTECTED_FEATURES.keys()))
 
     # Load data
     valid = load_data("data/test.gz.parquet").fillna(0)
@@ -64,7 +62,8 @@ def fai(debias=False):
     st.text(text_model_perf)
 
     st.header("Algorithmic Fairness Metrics")
-    threshold = st.slider("Set fairness deviation threshold", 0., 0.9, 0.2, 0.05)
+    threshold = st.slider(
+        "Set fairness deviation threshold", 0., 0.9, 0.2, 0.05)
 
     # Compute fairness measures
     privi_info = PROTECTED_FEATURES[protected_attribute]
@@ -78,17 +77,13 @@ def fai(debias=False):
     )
     alg_fai(aif_metric, threshold, fairness_metrics=METRICS_TO_USE)
 
-    st.subheader("Notes")
-    st.write("**Equal opportunity**:")
-    st.latex(r"\frac{\text{FNR}(D=\text{unprivileged})}{\text{FNR}(D=\text{privileged})}")
-    st.write("**Predictive parity**:")
-    st.latex(r"\frac{\text{PPV}(D=\text{unprivileged})}{\text{PPV}(D=\text{privileged})}")
-    st.write("**Statistical parity**:")
-    st.latex(r"\frac{\text{Selection Rate}(D=\text{unprivileged})}{\text{Selection Rate}(D=\text{privileged})}")
-    
+    with st.expander("Notes"):
+        fairness_notes()
+
 
 def compare():
-    protected_attribute = st.selectbox("Select protected column.", list(PROTECTED_FEATURES.keys()))
+    protected_attribute = st.selectbox(
+        "Select protected column.", list(PROTECTED_FEATURES.keys()))
 
     # Load data
     valid = load_data("output/valid.csv")
@@ -96,8 +91,10 @@ def compare():
     y_valid = valid[TARGET].values
 
     # Get predictions
-    orig_y_pred, orig_text_model_perf = prepare_pred(x_valid, y_valid, debias=False)
-    y_pred, text_model_perf = prepare_pred(x_valid, y_valid, debias=True)
+    orig_y_pred, orig_text_model_perf = prepare_pred(
+        x_valid, y_valid, debias=False)
+    y_pred, text_model_perf = prepare_pred(
+        x_valid, y_valid, debias=True)
 
     st.header("Model Performance")
     st.subheader("Before Mitigation")
@@ -106,10 +103,14 @@ def compare():
     st.text(text_model_perf)
 
     st.header("Algorithmic Fairness Metrics")
-    threshold = st.slider("Set fairness deviation threshold", 0., 0.9, 0.2, 0.05)
+    threshold = st.slider(
+        "Set fairness deviation threshold", 0., 0.9, 0.2, 0.05)
     lower = 1 - threshold
     upper = 1 / lower
-    st.write(f"Model is considered fair for the metric when **ratio is between {lower:.2f} and {upper:.2f}**.")
+    st.write(
+        "Model is considered fair for the metric when "
+        f"**ratio is between {lower:.2f} and {upper:.2f}**."
+    )
 
     # Compute fairness measures
     privi_info = PROTECTED_FEATURES[protected_attribute]
@@ -122,7 +123,8 @@ def compare():
         privi_info["unprivileged_attribute_values"],
     )
     orig_fmeasures = compute_fairness_measures(orig_aif_metric)
-    orig_fmeasures["Fair?"] = orig_fmeasures["Ratio"].apply(lambda x: "Yes" if lower < x < upper else "No")
+    orig_fmeasures["Fair?"] = orig_fmeasures["Ratio"].apply(
+        lambda x: "Yes" if lower < x < upper else "No")
 
     aif_metric = get_aif_metric(
         valid,
@@ -133,7 +135,8 @@ def compare():
         privi_info["unprivileged_attribute_values"],
     )
     fmeasures = compute_fairness_measures(aif_metric)
-    fmeasures["Fair?"] = fmeasures["Ratio"].apply(lambda x: "Yes" if lower < x < upper else "No")
+    fmeasures["Fair?"] = fmeasures["Ratio"].apply(
+        lambda x: "Yes" if lower < x < upper else "No")
 
     for m in METRICS_TO_USE:
         source = pd.concat([orig_fmeasures.query(f"Metric == '{m}'"),
@@ -141,8 +144,9 @@ def compare():
         source["Metric"] = ["1-Before Mitigation", "2-After Mitigation"]
 
         st.write(m)
-        st.altair_chart(fmeasures_chart(source, lower, upper), use_container_width=True)
+        st.altair_chart(
+            fmeasures_chart(source, lower, upper), use_container_width=True)
 
-    
+
 if __name__ == "__main__":
     fai()

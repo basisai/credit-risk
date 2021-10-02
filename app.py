@@ -5,7 +5,7 @@ import streamlit as st
 
 from dashboard.app_fai import fai
 from dashboard.app_xai_indiv import xai_indiv
-from dashboard.app_analysis import compare_models
+from dashboard.app_analysis import compare_models, analyse_model
 
 
 def main():

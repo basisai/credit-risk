@@ -65,8 +65,9 @@ def pdp_heatmap(pdp_interact_out, feature_names):
         if pdp_interact_out.feature_types[i] == "onehot":
             value_vars = pdp_interact_out.feature_grids[i]
             id_vars = list(set(source.columns) - set(value_vars))
-            source = pd.melt(source, value_vars=value_vars,
-                             id_vars=id_vars, var_name=feature_names[i])
+            source = pd.melt(
+                source, value_vars=value_vars,
+                id_vars=id_vars, var_name=feature_names[i])
             source = source[source["value"] == 1].drop(columns=["value"])
 
         elif pdp_interact_out.feature_types[i] == "binary":
@@ -91,7 +92,8 @@ def _convert_name(ind, feature_names):
 def make_source_dp(shap_values, features, feature_names, feature):
     ind = _convert_name(feature, feature_names)
 
-    # randomize the ordering so plotting overlaps are not related to data ordering
+    # randomize the ordering so plotting overlaps are not related to
+    # data ordering
     oinds = np.arange(shap_values.shape[0])
     np.random.shuffle(oinds)
 

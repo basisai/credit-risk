@@ -52,8 +52,9 @@ app = Flask(__name__)
 
 @app.before_first_request
 def init_background_threads():
-    """Global objects with daemon threads will be stopped by gunicorn --preload flag.
-    So instantiate them here instead.
+    """
+    Global objects with daemon threads will be stopped by
+    gunicorn --preload flag. So instantiate them here instead.
     """
     current_app.monitor = ModelMonitoringService()
 

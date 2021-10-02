@@ -14,8 +14,8 @@ TMP_BUCKET = get_temp_bucket_prefix()
 
 def load_data(execution_date):
     """Load data."""
-    # To simulate loading data by execution_date from saved data partitioned by date,
-    # load previously saved test data
+    # To simulate loading data by execution_date from saved data
+    # partitioned by date, load previously saved test data
     return pd.read_parquet("/artefact/test.gz.parquet")
 
 

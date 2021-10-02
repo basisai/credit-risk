@@ -9,41 +9,52 @@ from pdpbox import pdp, info_plots
 
 
 def get_explainer(
-        model=None,
-        model_type=None,
-        predict_func=None,
-        bkgrd_data=None,
-        kmeans_size=10,
-    ):
+    model=None,
+    model_type=None,
+    predict_func=None,
+    bkgrd_data=None,
+    kmeans_size=10,
+):
     """Function to select the SHAP explainer.
     Use the relevant explainer for each type of model.
-    :param Optional model: Model to compute shap values for. In case model is of unsupported
-        type, use predict_func to pass in a generic function instead
+    :param Optional model: Model to compute shap values for.
+        In case model is of unsupported type, use predict_func to pass in
+        a generic function instead
     :param Optional[str] model_type: Type of the model
-    :param Optional[Callable] predict_func: Generic function to compute shap values for.
-        It should take a matrix of samples (# samples x # features) and compute the
-        output of the model for those samples.
-        The output can be a vector (# samples) or a matrix (# samples x # model outputs).
-    :param: Optional[pandas.DataFrame] bkgrd_data: background data for explainability analysis
+    :param Optional[Callable] predict_func: Generic function to compute
+        shap values for.
+        It should take a matrix of samples (# samples x # features) and
+        compute the output of the model for those samples.
+        The output can be a vector (# samples) or a matrix
+        (# samples x # model outputs).
+    :param: Optional[pandas.DataFrame] bkgrd_data: background data for
+        explainability analysis
     :param: Optional[int] kmeans_size: Number of k-means clusters.
         Only required for explaining generic predict_func
     :return explainer
     """
     if model_type == "tree":
-        explainer = shap.TreeExplainer(model, feature_perturbation="interventional")
+        explainer = shap.TreeExplainer(
+            model, feature_perturbation="interventional")
     else:
         if bkgrd_data is None:
             raise ValueError("Non tree model requires background data")
         if model_type == "linear":
             explainer = shap.LinearExplainer(model, bkgrd_data)
         else:
-            explainer = _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size)
+            explainer = _get_kernel_explainer(
+                predict_func, bkgrd_data, kmeans_size)
     return explainer
 
 
 def _get_kernel_explainer(predict_func, bkgrd_data, kmeans_size=10):
     if predict_func is None:
-        raise ValueError("No target to compute shap values. Expected either model or predict_func")
+        raise ValueError(
+            """
+            No target to compute shap values.
+            Expected either model or predict_func
+            """
+        )
     # rather than use the whole training set to estimate expected values,
     # summarize with a set of weighted kmeans, each weighted by
     # the number of points they represent.
@@ -82,7 +93,9 @@ def compute_corrcoef(features, shap_values):
     for cls_shap_val in shap_values:
         corrs = list()
         for i in range(features.shape[1]):
-            df_ = pd.DataFrame({"x": features.iloc[:, i].values, "y": cls_shap_val[:, i]})
+            df_ = pd.DataFrame({
+                "x": features.iloc[:, i].values, "y": cls_shap_val[:, i]
+            })
             corrs.append(df_.corr(method="pearson").values[0, 1])
         all_corrs.append(np.array(corrs))
     return all_corrs
@@ -91,13 +104,13 @@ def compute_corrcoef(features, shap_values):
 ###############################################################################
 # Explainability plots
 def shap_summary_plot(
-        shap_values,
-        features,
-        feature_names=None,
-        max_display=None,
-        plot_size=(12, 6),
-        show=False,
-    ):
+    shap_values,
+    features,
+    feature_names=None,
+    max_display=None,
+    plot_size=(12, 6),
+    show=False,
+):
     """Plot SHAP summary plot."""
     # TODO: convert to altair chart
     fig = plt.figure()
@@ -114,14 +127,14 @@ def shap_summary_plot(
 
 
 def shap_dependence_plot(
-        ind,
-        shap_values=None,
-        features=None,
-        feature_names=None,
-        interaction_index="auto",
-        show=False,
-        plot_size=(12, 6),
-    ):
+    ind,
+    shap_values=None,
+    features=None,
+    feature_names=None,
+    interaction_index="auto",
+    show=False,
+    plot_size=(12, 6),
+):
     """Plot dependence interaction chart."""
     # TODO: convert to altair chart
     fig, ax = plt.subplots(figsize=plot_size)
@@ -139,19 +152,19 @@ def shap_dependence_plot(
 
 
 def pdp_plot(
-        model,
-        dataset,
-        model_features,
-        feature,
-        feature_name,
-        num_grid_points=10,
-        xticklabels=None,
-        plot_lines=False,
-        frac_to_plot=1,
-        plot_pts_dist=False,
-        x_quantile=False,
-        show_percentile=False,
-    ):
+    model,
+    dataset,
+    model_features,
+    feature,
+    feature_name,
+    num_grid_points=10,
+    xticklabels=None,
+    plot_lines=False,
+    frac_to_plot=1,
+    plot_pts_dist=False,
+    x_quantile=False,
+    show_percentile=False,
+):
     """Wrapper for pdp.pdp_plot. Uses pdp.pdp_isolate."""
     pdp_iso = pdp.pdp_isolate(
         model=model,
@@ -180,14 +193,14 @@ def pdp_plot(
 
 
 def actual_plot(
-        model,
-        X,
-        feature,
-        feature_name,
-        num_grid_points=10,
-        xticklabels=None,
-        show_percentile=False,
-    ):
+    model,
+    X,
+    feature,
+    feature_name,
+    num_grid_points=10,
+    xticklabels=None,
+    show_percentile=False,
+):
     """Wrapper for info_plots.actual_plot."""
     fig, axes, summary_df = info_plots.actual_plot(
         model=model,
@@ -205,14 +218,14 @@ def actual_plot(
 
 
 def target_plot(
-        df,
-        feature,
-        feature_name,
-        target,
-        num_grid_points=10,
-        xticklabels=None,
-        show_percentile=False,
-    ):
+    df,
+    feature,
+    feature_name,
+    target,
+    num_grid_points=10,
+    xticklabels=None,
+    show_percentile=False,
+):
     """Wrapper for info_plots.target_plot."""
     fig, axes, summary_df = info_plots.target_plot(
         df=df,
@@ -229,15 +242,15 @@ def target_plot(
 
 
 def pdp_interact_plot(
-        model,
-        dataset,
-        model_features,
-        feature1,
-        feature2,
-        plot_type="grid",
-        x_quantile=True,
-        plot_pdp=False,
-    ):
+    model,
+    dataset,
+    model_features,
+    feature1,
+    feature2,
+    plot_type="grid",
+    x_quantile=True,
+    plot_pdp=False,
+):
     """Wrapper for pdp.pdp_interact_plot. Uses pdp.pdp_interact."""
     pdp_interact_out = pdp.pdp_interact(
         model=model,
