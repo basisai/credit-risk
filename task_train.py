@@ -81,13 +81,13 @@ def compute_log_metrics(
     f1_score = metrics.f1_score(y_val, y_pred)
     roc_auc = metrics.roc_auc_score(y_val, y_prob)
     avg_prc = metrics.average_precision_score(y_val, y_prob)
-    print("Evaluation\n"
-          f"  Accuracy          = {acc:.4f}\n"
-          f"  Precision         = {precision:.4f}\n"
-          f"  Recall            = {recall:.4f}\n"
-          f"  F1 score          = {f1_score:.4f}\n"
-          f"  ROC AUC           = {roc_auc:.4f}\n"
-          f"  Average precision = {avg_prc:.4f}")
+
+    print(f"  Accuracy          = {acc:.4f}")
+    print(f"  Precision         = {precision:.4f}")
+    print(f"  Recall            = {recall:.4f}")
+    print(f"  F1 score          = {f1_score:.4f}")
+    print(f"  ROC AUC           = {roc_auc:.4f}")
+    print(f"  Average precision = {avg_prc:.4f}")
 
     # Log metrics
     bdrk.log_metrics(
@@ -103,6 +103,8 @@ def compute_log_metrics(
 
     # Calculate and upload xafai metrics
     analyzer = ModelAnalyzer(clf, "tree_model", model_type=ModelTypes.TREE)
+    for c in PROTECTED_FEATURES:
+        x_val[c] = x_val[c].astype(int)
     analyzer.test_features(x_val)
     analyzer.fairness_config(PROTECTED_FEATURES)
     analyzer.test_labels(y_val).test_inference(y_pred)

@@ -1,6 +1,7 @@
 version = "1.0"
 
 train {
+  /*
   step "features_trainer" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
     install = [
@@ -9,13 +10,14 @@ train {
     ]
     script = [{sh = ["python3 task_features_trainer.py"]}]
     resources {
-      cpu = "2"
+      cpu    = "2"
       memory = "12G"
     }
     retry {
       limit = 1
     }
   }
+  */
 
   step "train" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
@@ -25,13 +27,13 @@ train {
     ]
     script = [{sh = ["python3 task_train.py"]}]
     resources {
-      cpu = "2"
+      cpu    = "2"
       memory = "14G"
     }
     retry {
       limit = 1
     }
-    depends_on = ["features_trainer"]
+    # depends_on = ["features_trainer"]
   }
 
   parameters {
