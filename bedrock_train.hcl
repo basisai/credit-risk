@@ -1,7 +1,6 @@
 version = "1.0"
 
 train {
-  /*
   step "features_trainer" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
     install = [
@@ -17,7 +16,6 @@ train {
       limit = 1
     }
   }
-  */
 
   step "train" {
     image = "quay.io/basisai/workload-standard:v0.3.1"
@@ -33,7 +31,7 @@ train {
     retry {
       limit = 1
     }
-    # depends_on = ["features_trainer"]
+    depends_on = ["features_trainer"]
   }
 
   parameters {

@@ -102,10 +102,15 @@ def compute_log_metrics(
     )
 
     # Calculate and upload xafai metrics
-    analyzer = ModelAnalyzer(clf, "tree_model", model_type=ModelTypes.TREE)
+
+    # ValueError: Type mismatch for feature NAME_EDUCATION_TYPE_Higher_education:
+    # config has type <class 'int'> while values have type <class 'float'>.
+    _x_val = x_val.copy()
     for c in PROTECTED_FEATURES:
-        x_val[c] = x_val[c].astype(int)
-    analyzer.test_features(x_val)
+        _x_val[c] = _x_val[c].astype(int)
+
+    analyzer = ModelAnalyzer(clf, "tree_model", model_type=ModelTypes.TREE)
+    analyzer.test_features(_x_val)
     analyzer.fairness_config(PROTECTED_FEATURES)
     analyzer.test_labels(y_val).test_inference(y_pred)
     analyzer.analyze()
@@ -128,12 +133,14 @@ def trainer(execution_date: datetime) -> None:
     print("\nTrain model")
     start = time.time()
     clf = get_model()
-    clf.fit(x_train,
-            y_train,
-            eval_set=[(x_train, y_train), (x_valid, y_valid)],
-            eval_metric="auc",
-            verbose=200,
-            early_stopping_rounds=200)
+    clf.fit(
+        x_train,
+        y_train,
+        eval_set=[(x_train, y_train), (x_valid, y_valid)],
+        eval_metric="auc",
+        verbose=200,
+        early_stopping_rounds=200,
+    )
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
     print("\nEvaluate")
