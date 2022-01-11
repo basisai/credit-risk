@@ -5,7 +5,7 @@ import pandas as pd
 
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = f"{get_bucket_prefix()}credit/"
+BUCKET = f"{get_bucket_prefix()}/credit"
 
 BUREAU_CATEGORICAL_COLS = ['CREDIT_ACTIVE', 'CREDIT_CURRENCY', 'CREDIT_TYPE']
 
@@ -38,12 +38,14 @@ BB_CATEGORIES = [
 ]
 
 
-def bureau_and_balance():
-    bureau = load_data(BUCKET + 'auxiliary/bureau.csv')
-    bb = load_data(BUCKET + 'auxiliary/bureau_balance.csv')
+def bureau_and_balance() -> pd.DataFrame:
+    """Preprocess bureau and balance."""
+    bureau = load_data(f'{BUCKET}/auxiliary/bureau.csv')
+    bb = load_data(f'{BUCKET}/auxiliary/bureau_balance.csv')
 
     # One-hot encoding of categorical features
-    bureau, bureau_cat = onehot_enc(bureau, BUREAU_CATEGORICAL_COLS, BUREAU_CATEGORIES)
+    bureau, bureau_cat = onehot_enc(
+        bureau, BUREAU_CATEGORICAL_COLS, BUREAU_CATEGORIES)
     bb, bb_cat = onehot_enc(bb, BB_CATEGORICAL_COLS, BB_CATEGORIES)
 
     # Bureau balance: Perform aggregations and merge with bureau.csv
@@ -51,7 +53,10 @@ def bureau_and_balance():
     for col in bb_cat:
         bb_aggregations[col] = ['mean']
     bb_agg = bb.groupby('SK_ID_BUREAU').agg(bb_aggregations)
-    bb_agg.columns = pd.Index([e[0] + "_" + e[1].upper() for e in bb_agg.columns.tolist()])
+    bb_agg.columns = pd.Index([
+        e[0] + "_" + e[1].upper()
+        for e in bb_agg.columns.tolist()
+    ])
     bureau = bureau.join(bb_agg, how='left', on='SK_ID_BUREAU')
     bureau.drop(['SK_ID_BUREAU'], axis=1, inplace=True)
 
@@ -79,18 +84,31 @@ def bureau_and_balance():
     for cat in bb_cat:
         cat_aggregations[cat + "_MEAN"] = ['mean']
 
-    bureau_agg = bureau.groupby('SK_ID_CURR').agg({**num_aggregations, **cat_aggregations})
-    bureau_agg.columns = pd.Index(['BURO_' + e[0] + "_" + e[1].upper() for e in bureau_agg.columns.tolist()])
+    bureau_agg = (
+        bureau
+        .groupby('SK_ID_CURR')
+        .agg({**num_aggregations, **cat_aggregations})
+    )
+    bureau_agg.columns = pd.Index([
+        'BURO_' + e[0] + "_" + e[1].upper()
+        for e in bureau_agg.columns.tolist()
+    ])
 
     # Bureau: Active credits - using only numerical aggregations
     active = bureau[bureau['CREDIT_ACTIVE_Active'] == 1]
     active_agg = active.groupby('SK_ID_CURR').agg(num_aggregations)
-    active_agg.columns = pd.Index(['ACTIVE_' + e[0] + "_" + e[1].upper() for e in active_agg.columns.tolist()])
+    active_agg.columns = pd.Index([
+        'ACTIVE_' + e[0] + "_" + e[1].upper()
+        for e in active_agg.columns.tolist()
+    ])
     bureau_agg = bureau_agg.join(active_agg, how='left', on='SK_ID_CURR')
 
     # Bureau: Closed credits - using only numerical aggregations
     closed = bureau[bureau['CREDIT_ACTIVE_Closed'] == 1]
     closed_agg = closed.groupby('SK_ID_CURR').agg(num_aggregations)
-    closed_agg.columns = pd.Index(['CLOSED_' + e[0] + "_" + e[1].upper() for e in closed_agg.columns.tolist()])
+    closed_agg.columns = pd.Index([
+        'CLOSED_' + e[0] + "_" + e[1].upper()
+        for e in closed_agg.columns.tolist()
+    ])
     bureau_agg = bureau_agg.join(closed_agg, how='left', on='SK_ID_CURR')
     return bureau_agg

@@ -1,13 +1,14 @@
 """
 Script to perform preprocessing of application data.
 """
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import numpy as np
+import pandas as pd
 
 from preprocess.utils import load_data, onehot_enc, get_bucket_prefix
 
-BUCKET = f"{get_bucket_prefix()}credit/"
+BUCKET = f"{get_bucket_prefix()}/credit"
 
 BINARY_MAP = {
     'CODE_GENDER': ['F', 'M'],
@@ -25,54 +26,76 @@ CATEGORICAL_COLS = [
 
 CATEGORIES = [
     ['Cash loans', 'Revolving loans'],
-    ['Children', 'Family', 'Group of people', 'Other_A', 'Other_B', 'Spouse, partner', 'Unaccompanied'],
     [
-        'Businessman', 'Commercial associate', 'Maternity leave', 'Pensioner', 'State servant',
-        'Student', 'Unemployed', 'Working',
+        'Children', 'Family', 'Group of people', 'Other_A', 'Other_B',
+        'Spouse, partner', 'Unaccompanied',
     ],
     [
-        'Academic degree', 'Higher education', 'Incomplete higher', 'Lower secondary',
-        'Secondary / secondary special',
-    ],
-    ['Civil marriage', 'Married', 'Separated', 'Single / not married', 'Unknown', 'Widow'],
-    [
-        'Co-op apartment', 'House / apartment', 'Municipal apartment', 'Office apartment',
-        'Rented apartment', 'With parents',
+        'Businessman', 'Commercial associate', 'Maternity leave',
+        'Pensioner', 'State servant', 'Student', 'Unemployed', 'Working',
     ],
     [
-        'Accountants', 'Cleaning staff', 'Cooking staff', 'Core staff', 'Drivers', 'HR staff',
-        'High skill tech staff', 'IT staff', 'Laborers', 'Low-skill Laborers', 'Managers',
-        'Medicine staff', 'Private service staff', 'Realty agents',
-        'Sales staff', 'Secretaries', 'Security staff', 'Waiters/barmen staff'
+        'Academic degree', 'Higher education', 'Incomplete higher',
+        'Lower secondary', 'Secondary / secondary special',
     ],
-    ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
     [
-        'Advertising', 'Agriculture', 'Bank', 'Business Entity Type 1', 'Business Entity Type 2',
-        'Business Entity Type 3', 'Cleaning', 'Construction', 'Culture', 'Electricity', 'Emergency',
-        'Government', 'Hotel', 'Housing', 'Industry: type 1', 'Industry: type 10', 'Industry: type 11',
-        'Industry: type 12', 'Industry: type 13', 'Industry: type 2', 'Industry: type 3',
-        'Industry: type 4', 'Industry: type 5', 'Industry: type 6', 'Industry: type 7',
-        'Industry: type 8', 'Industry: type 9', 'Insurance', 'Kindergarten', 'Legal Services',
-        'Medicine', 'Military', 'Mobile', 'Other', 'Police', 'Postal', 'Realtor', 'Religion',
-        'Restaurant', 'School', 'Security', 'Security Ministries', 'Self-employed', 'Services',
-        'Telecom', 'Trade: type 1', 'Trade: type 2', 'Trade: type 3', 'Trade: type 4', 'Trade: type 5',
-        'Trade: type 6', 'Trade: type 7', 'Transport: type 1', 'Transport: type 2', 'Transport: type 3',
+        'Civil marriage', 'Married', 'Separated', 'Single / not married',
+        'Unknown', 'Widow',
+    ],
+    [
+        'Co-op apartment', 'House / apartment', 'Municipal apartment',
+        'Office apartment', 'Rented apartment', 'With parents',
+    ],
+    [
+        'Accountants', 'Cleaning staff', 'Cooking staff', 'Core staff',
+        'Drivers', 'HR staff', 'High skill tech staff', 'IT staff',
+        'Laborers', 'Low-skill Laborers', 'Managers', 'Medicine staff',
+        'Private service staff', 'Realty agents', 'Sales staff',
+        'Secretaries', 'Security staff', 'Waiters/barmen staff',
+    ],
+    [
+        'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY',
+        'SATURDAY', 'SUNDAY',
+    ],
+    [
+        'Advertising', 'Agriculture', 'Bank', 'Business Entity Type 1',
+        'Business Entity Type 2', 'Business Entity Type 3', 'Cleaning',
+        'Construction', 'Culture', 'Electricity', 'Emergency', 'Government',
+        'Hotel', 'Housing', 'Industry: type 1', 'Industry: type 10',
+        'Industry: type 11', 'Industry: type 12', 'Industry: type 13',
+        'Industry: type 2', 'Industry: type 3', 'Industry: type 4',
+        'Industry: type 5', 'Industry: type 6', 'Industry: type 7',
+        'Industry: type 8', 'Industry: type 9', 'Insurance', 'Kindergarten',
+        'Legal Services', 'Medicine', 'Military', 'Mobile', 'Other', 'Police',
+        'Postal', 'Realtor', 'Religion', 'Restaurant', 'School', 'Security',
+        'Security Ministries', 'Self-employed', 'Services', 'Telecom',
+        'Trade: type 1', 'Trade: type 2', 'Trade: type 3', 'Trade: type 4',
+        'Trade: type 5', 'Trade: type 6', 'Trade: type 7', 'Transport: type 1',
+        'Transport: type 2', 'Transport: type 3',
         'Transport: type 4', 'University', 'XNA',
     ],
-    ['not specified', 'org spec account', 'reg oper account', 'reg oper spec account'],
+    [
+        'not specified', 'org spec account', 'reg oper account',
+        'reg oper spec account',
+    ],
     ['block of flats', 'specific housing', 'terraced house'],
-    ['Block', 'Mixed', 'Monolithic', 'Others', 'Panel', 'Stone, brick', 'Wooden'],
+    [
+        'Block', 'Mixed', 'Monolithic', 'Others', 'Panel',
+        'Stone, brick', 'Wooden',
+    ],
     ['No', 'Yes'],
 ]
 
 
-def application(execution_date):
+def application(execution_date: datetime) -> pd.DataFrame:
     """Preprocess applications."""
     data_date = (execution_date - timedelta(days=1)).strftime("%Y-%m-%d")
-    file_path = BUCKET + "application/date_partition={}/applications.csv".format(data_date)
+    file_path = (
+        f"{BUCKET}/application/date_partition={data_date}/applications.csv"
+    )
     raw_df = (
         load_data(file_path)
-        .query("CODE_GENDER != 'XNA'")  # Remove applications with XNA CODE_GENDER
+        .query("CODE_GENDER != 'XNA'")  # Remove applications with XNA
     )
 
     # Binarize

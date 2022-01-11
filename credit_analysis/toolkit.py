@@ -1,6 +1,7 @@
 """
 Toolkit
 """
+from typing import Tuple
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -8,7 +9,11 @@ from sklearn import metrics
 from scipy.sparse import coo_matrix
 
 
-def anova_func(y_true, y_prob, threshold):
+def anova_func(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    threshold: float,
+) -> Tuple[float]:
     """Compute ANOVA."""
     anova_cut = y_prob > threshold
     predicted_bad = y_true[anova_cut]
@@ -20,7 +25,7 @@ def anova_func(y_true, y_prob, threshold):
     return bad_mean, good_mean, anova_stat
 
 
-def ks_func(y_true, y_prob):
+def ks_func(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple[float]:
     """Compute KS statistics."""
     bad_prob = y_prob[y_true == 1]
     bad_prob = np.sort(bad_prob)
@@ -30,7 +35,7 @@ def ks_func(y_true, y_prob):
     return bad_prob, good_prob, ks_stat
 
 
-def roc_func(y_true, y_prob):
+def roc_func(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple:
     """Compute ROC AUC and Gini."""
     roc_auc = metrics.roc_auc_score(y_true, y_prob)
     gini = roc_auc * 2 - 1
@@ -38,7 +43,11 @@ def roc_func(y_true, y_prob):
     return roc_auc, gini, fpr, tpr, thresholds
 
 
-def odds_func(y_true, y_prob, num_bins):
+def odds_func(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    num_bins: int,
+) -> pd.DataFrame:
     df = pd.DataFrame({
         "actual": y_true,
         "pred": y_prob,
@@ -47,31 +56,56 @@ def odds_func(y_true, y_prob, num_bins):
     df1 = df.groupby("bin1").agg({"actual": ["count", "sum"]})
     df1.columns = ['Number of loans', 'Number of bad loans']
     df1 = pd.DataFrame({'Pred Proba of Default': [
-        f"{i / num_bins:.1f} to {(i + 1) / num_bins:.1f}" for i in range(num_bins)]}).join(df1)
+        f"{i / num_bins:.1f} to {(i + 1) / num_bins:.1f}"
+        for i in range(num_bins)
+    ]}).join(df1)
     df1.fillna(0, inplace=True)
     df1 = df1[::-1].reset_index(drop=True)
-    df1["Cumulative % of loans"] = np.cumsum(df1["Number of loans"]) / len(y_true) * 100
-    df1["Cumulative % of bad loans"] = np.cumsum(df1["Number of bad loans"]) / \
-                                       df1["Number of bad loans"].sum() * 100
-    df1["Odds (good to bad)"] = (df1['Number of loans'] - df1['Number of bad loans']) / \
-                                df1['Number of bad loans']
-    return df1[['Pred Proba of Default', 'Number of loans', 'Cumulative % of loans',
-                'Number of bad loans', 'Cumulative % of bad loans', 'Odds (good to bad)']]
+    df1["Cumulative % of loans"] = (
+        np.cumsum(df1["Number of loans"]) / len(y_true) * 100
+    )
+    df1["Cumulative % of bad loans"] = (
+        np.cumsum(df1["Number of bad loans"])
+        / df1["Number of bad loans"].sum() * 100
+     )
+    df1["Odds (good to bad)"] = (
+        (df1['Number of loans'] - df1['Number of bad loans'])
+        / df1['Number of bad loans']
+    )
+    return df1[[
+        'Pred Proba of Default', 'Number of loans',
+        'Cumulative % of loans', 'Number of bad loans',
+        'Cumulative % of bad loans', 'Odds (good to bad)',
+    ]]
 
 
-def score_shift_func(prob_a, prob_b, num_bins):
+def score_shift_func(
+    prob_a: np.ndarray,
+    prob_b: np.ndarray,
+    num_bins: int,
+) -> pd.DataFrame:
     bin1 = np.clip((prob_a * num_bins).astype(int), 0, num_bins - 1)
     bin2 = np.clip((prob_b * num_bins).astype(int), 0, num_bins - 1)
     score_mat = coo_matrix(
         (np.ones(len(bin1)), (bin1, bin2)),
         shape=(num_bins, num_bins)
     ).toarray()
-    axnames = [f"{i / num_bins:.1f} to {(i + 1) / num_bins:.1f}" for i in range(num_bins)]
-    score_shift_matrix = pd.DataFrame(score_mat, columns=axnames, index=axnames)
+    axnames = [
+        f"{i / num_bins:.1f} to {(i + 1) / num_bins:.1f}"
+        for i in range(num_bins)
+    ]
+    score_shift_matrix = pd.DataFrame(
+        score_mat, columns=axnames, index=axnames)
     return score_shift_matrix
 
 
-def acct_table(y_true, y_prob, threshold, loss_per_bad_acct=2500, rev_per_good_acct=100):
+def acct_table(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    threshold: float,
+    loss_per_bad_acct: float = 2500.,
+    rev_per_good_acct: float = 100.,
+) -> pd.DataFrame:
     accepts = y_prob < threshold
     num_bad_accts = np.sum(y_true[accepts])
     num_good_accts = np.sum(accepts) - num_bad_accts
@@ -95,12 +129,19 @@ def acct_table(y_true, y_prob, threshold, loss_per_bad_acct=2500, rev_per_good_a
     return output_df
 
 
-def swapset(y_true, y_prob, y_baseline, cutoff):
+def swapset(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    y_baseline: np.ndarray,
+    cutoff: float,
+) -> Tuple:
     cnt = np.sum(y_baseline > cutoff)
     swap_above = np.sum((y_baseline < cutoff) & (y_prob > cutoff))
-    swap_above_bad = np.sum((y_baseline < cutoff) & (y_prob > cutoff) & (y_true == 1))
+    swap_above_bad = np.sum(
+        (y_baseline < cutoff) & (y_prob > cutoff) & (y_true == 1))
     swap_below = np.sum((y_baseline > cutoff) & (y_prob < cutoff))
-    swap_below_bad = np.sum((y_baseline > cutoff) & (y_prob < cutoff) & (y_true == 1))
+    swap_below_bad = np.sum(
+        (y_baseline > cutoff) & (y_prob < cutoff) & (y_true == 1))
 
     pct_above = cnt / len(y_true) * 100
     pct_below = 100 - cnt / len(y_true) * 100
@@ -108,57 +149,13 @@ def swapset(y_true, y_prob, y_baseline, cutoff):
     pct_swap_below = swap_below / len(y_true) * 100
     odds_swap_above = (swap_above - swap_above_bad) / swap_above_bad
     odds_swap_below = (swap_below - swap_below_bad) / swap_below_bad
-    return pct_above, pct_below, pct_swap_above, pct_swap_below, odds_swap_above, odds_swap_below
+    return (
+        pct_above, pct_below, pct_swap_above,
+        pct_swap_below, odds_swap_above, odds_swap_below,
+    )
 
 
-# TODO
-# def swapset_tables(y_true, y_prob, y_baseline, swapSetThreshold):
-#     lrAccepts = (y_prob < swapSetThreshold)
-#     tmAccepts = (y_baseline < swapSetThreshold)
-#
-#     st.write('Original Breakdown:')
-#     from sklearn import metrics
-#     accept_mat = metrics.confusion_matrix(lrAccepts * 1, tmAccepts * 1)
-#     preSwapTable = pd.DataFrame(np.rot90(np.rot90(accept_mat)),
-#                                 columns=['Accepted by B', 'Rejected by B'],
-#                                 index=['Accepted by A', 'Rejected by A'])
-#     st.write(preSwapTable)
-#
-#     # preSwapTable = np.zeros((2, 2))
-#     # preSwapTable[0, 0] = np.sum(lrAccepts[lrAccepts == tmAccepts])
-#     # preSwapTable[1, 1] = np.sum(~lrAccepts[lrAccepts == tmAccepts])
-#     # preSwapTable[0, 1] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-#     # preSwapTable[1, 0] = np.sum(tmAccepts[lrAccepts != tmAccepts])
-#     # preSwapTable = pd.DataFrame(preSwapTable, columns=['Accepted by B', 'Rejected by B'],
-#     #                             index=['Accepted by A', 'Rejected by A'])
-#     # st.write(preSwapTable)
-#
-#     st.write('Swapped to maintain same approval rate:')
-#     swapSameApprovalRate = np.zeros((3, 3))
-#     swapSameApprovalRate[0, 0] = np.sum(lrAccepts[lrAccepts == tmAccepts])
-#     swapSameApprovalRate[0, 1] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-#     swapSameApprovalRate[1, 0] = np.sum(lrAccepts[lrAccepts != tmAccepts])
-#     swapSameApprovalRate[1, 1] = np.sum(~lrAccepts[lrAccepts == tmAccepts])
-#     swapSameApprovalRate[0, 2] = np.sum(y_true[lrAccepts]) / np.sum(lrAccepts)
-#
-#     lr_num = lrAccepts[lrAccepts != tmAccepts].sum()
-#     tm_num = tmAccepts[lrAccepts != tmAccepts].sum()
-#     if lr_num < tm_num:
-#         swapIn = np.random.choice(
-#             y_true[(lrAccepts != tmAccepts) & (tmAccepts == 1)], lr_num, replace=False)
-#         swapSameApprovalRate[2, 0] = (np.sum(y_true[(lrAccepts == tmAccepts) & (lrAccepts == 1)]) +
-#                                       np.sum(swapIn)) / \
-#                                      (swapSameApprovalRate[1, 0] + swapSameApprovalRate[0, 0])
-#     swapSameApprovalRate = pd.DataFrame(swapSameApprovalRate,
-#                                         columns=['Accepted by B', 'Rejected by B', 'Old Bad Rate'],
-#                                         index=['Accepted by A', 'Rejected by A', 'New Bad Rate'])
-#
-#     swapSameApprovalRate = swapSameApprovalRate.style.apply(highlight_cells, axis=None)
-#     st.write(swapSameApprovalRate)
-#     st.write('*Legend: Green - new bad rate, Red - old bad rate*')
-
-
-def highlight_cells(x):
+def highlight_cells(x: np.ndarray) -> pd.DataFrame:
     df = x.copy()
     # set default color
     # df.loc[:,:] = 'background-color: papayawhip'

@@ -3,10 +3,13 @@ Script to train model.
 """
 import pickle
 import time
+from datetime import datetime
 from os import getenv
+from typing import Any, List, Union
 
 import bdrk
 import numpy as np
+import pandas as pd
 import lightgbm as lgb
 import xgboost as xgb
 from bdrk.model_analyzer import ModelAnalyzer, ModelTypes
@@ -30,13 +33,13 @@ OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
 
-def get_feats_to_use():
+def get_feats_to_use() -> List[str]:
     if MODEL_VER == "xgboost-pruned" or MODEL_VER == "lightgbm-pruned":
         return FEATURES_PRUNED
     return FEATURES
 
 
-def get_model():
+def get_model() -> Any:
     if MODEL_VER == "lightgbm" or MODEL_VER == "lightgbm-pruned":
         return lgb.LGBMClassifier(
             num_leaves=NUM_LEAVES,
@@ -63,7 +66,11 @@ def get_model():
         raise Exception("Model not implemented")
 
 
-def compute_log_metrics(clf, x_val, y_val):
+def compute_log_metrics(
+    clf: Any,
+    x_val: Union[np.ndarray, pd.DataFrame],
+    y_val: np.ndarray,
+) -> None:
     """Compute and log metrics."""
     y_prob = clf.predict_proba(x_val)[:, 1]
     y_pred = (y_prob > 0.5).astype(int)
@@ -74,13 +81,13 @@ def compute_log_metrics(clf, x_val, y_val):
     f1_score = metrics.f1_score(y_val, y_pred)
     roc_auc = metrics.roc_auc_score(y_val, y_prob)
     avg_prc = metrics.average_precision_score(y_val, y_prob)
-    print("Evaluation\n"
-          f"  Accuracy          = {acc:.4f}\n"
-          f"  Precision         = {precision:.4f}\n"
-          f"  Recall            = {recall:.4f}\n"
-          f"  F1 score          = {f1_score:.4f}\n"
-          f"  ROC AUC           = {roc_auc:.4f}\n"
-          f"  Average precision = {avg_prc:.4f}")
+
+    print(f"  Accuracy          = {acc:.4f}")
+    print(f"  Precision         = {precision:.4f}")
+    print(f"  Recall            = {recall:.4f}")
+    print(f"  F1 score          = {f1_score:.4f}")
+    print(f"  ROC AUC           = {roc_auc:.4f}")
+    print(f"  Average precision = {avg_prc:.4f}")
 
     # Log metrics
     bdrk.log_metrics(
@@ -95,17 +102,24 @@ def compute_log_metrics(clf, x_val, y_val):
     )
 
     # Calculate and upload xafai metrics
+
+    # ValueError: Type mismatch for feature NAME_EDUCATION_TYPE_Higher_education:
+    # config has type <class 'int'> while values have type <class 'float'>.
+    _x_val = x_val.copy()
+    for c in PROTECTED_FEATURES:
+        _x_val[c] = _x_val[c].astype(int)
+
     analyzer = ModelAnalyzer(clf, "tree_model", model_type=ModelTypes.TREE)
-    analyzer.test_features(x_val)
+    analyzer.test_features(_x_val)
     analyzer.fairness_config(PROTECTED_FEATURES)
     analyzer.test_labels(y_val).test_inference(y_pred)
     analyzer.analyze()
 
 
-def trainer(execution_date):
+def trainer(execution_date: datetime) -> None:
     """Entry point to perform training."""
     print("\nLoad train data")
-    data = load_data(TMP_BUCKET + "credit_train/train.csv")
+    data = load_data(f"{TMP_BUCKET}/credit_train/train.csv")
     data = data.fillna(0)
     print("  Train data shape:", data.shape)
 
@@ -119,12 +133,14 @@ def trainer(execution_date):
     print("\nTrain model")
     start = time.time()
     clf = get_model()
-    clf.fit(x_train,
-            y_train,
-            eval_set=[(x_train, y_train), (x_valid, y_valid)],
-            eval_metric="auc",
-            verbose=200,
-            early_stopping_rounds=200)
+    clf.fit(
+        x_train,
+        y_train,
+        eval_set=[(x_train, y_train), (x_valid, y_valid)],
+        eval_metric="auc",
+        verbose=200,
+        early_stopping_rounds=200,
+    )
     print("  Time taken = {:.0f} s".format(time.time() - start))
 
     print("\nEvaluate")
@@ -155,7 +171,7 @@ def trainer(execution_date):
     copyfile("data/test.gz.parquet", "/artefact/test.gz.parquet")
 
 
-def main():
+def main() -> None:
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
     trainer(execution_date)

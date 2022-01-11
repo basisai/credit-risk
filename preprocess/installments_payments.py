@@ -5,13 +5,15 @@ import pandas as pd
 
 from preprocess.utils import load_data, get_bucket_prefix
 
-BUCKET = f"{get_bucket_prefix()}credit/"
+BUCKET = f"{get_bucket_prefix()}/credit"
 
 
-def installments_payments():
-    ins = load_data(BUCKET + 'auxiliary/installments_payments.csv')
+def installments_payments() -> pd.DataFrame:
+    """Preprocess installment payments."""
+    ins = load_data(f'{BUCKET}/auxiliary/installments_payments.csv')
 
-    # Percentage and difference paid in each installment (amount paid and installment value)
+    # Percentage and difference paid in each installment
+    # (amount paid and installment value)
     ins['PAYMENT_PERC'] = ins['AMT_PAYMENT'] / ins['AMT_INSTALMENT']
     ins['PAYMENT_DIFF'] = ins['AMT_INSTALMENT'] - ins['AMT_PAYMENT']
 
@@ -33,7 +35,10 @@ def installments_payments():
         'DAYS_ENTRY_PAYMENT': ['max', 'mean', 'sum']
     }
     ins_agg = ins.groupby('SK_ID_CURR').agg(aggregations)
-    ins_agg.columns = pd.Index(['INSTAL_' + e[0] + "_" + e[1].upper() for e in ins_agg.columns.tolist()])
+    ins_agg.columns = pd.Index([
+        'INSTAL_' + e[0] + "_" + e[1].upper()
+        for e in ins_agg.columns.tolist()
+    ])
 
     # Count installments accounts
     ins_agg['INSTAL_COUNT'] = ins.groupby('SK_ID_CURR').size()

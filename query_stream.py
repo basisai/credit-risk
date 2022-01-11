@@ -1,7 +1,7 @@
 import time
 import json
-import requests
 import random
+import requests
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,8 @@ URL = "<MODEL_ENDPOINT_URL>"
 TOKEN = "<MODEL_ENDPOINT_TOKEN>"
 
 
-def get_data(sk_ids):
+def get_data(sk_ids: list) -> str:
+    """Get random sample of sk_id"""
     data = {"sk_id": random.choice(sk_ids)}
     return json.dumps(data)
 

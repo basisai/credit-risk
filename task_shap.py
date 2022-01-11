@@ -2,7 +2,9 @@
 Script to perform batch scoring of Shapley values.
 """
 import pickle
+from datetime import datetime
 
+import bdrk
 import pandas as pd
 import shap
 
@@ -12,14 +14,14 @@ from preprocess.constants import TARGET
 TMP_BUCKET = get_temp_bucket_prefix()
 
 
-def load_data(execution_date):
+def load_data(execution_date: datetime) -> pd.DataFrame:
     """Load data."""
     # To simulate loading data by execution_date from saved data
     # partitioned by date, load previously saved test data
     return pd.read_parquet("/artefact/test.gz.parquet")
 
 
-def compute_shap(execution_date):
+def compute_shap(execution_date: datetime) -> None:
     """Batch scoring pipeline"""
     print("\nLoad data")
     data = load_data(execution_date)
@@ -43,14 +45,16 @@ def compute_shap(execution_date):
     print("  Output data shape:", output_df.shape)
 
     print("\nSave output data")
-    output_df.to_csv(TMP_BUCKET + "credit_shap/shap.csv", index=False)
+    output_df.to_csv(f"{TMP_BUCKET}/credit_shap/shap.csv", index=False)
 
 
-def main():
+def main() -> None:
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
     compute_shap(execution_date)
 
 
 if __name__ == "__main__":
-    main()
+    bdrk.init()
+    with bdrk.start_run():
+        main()

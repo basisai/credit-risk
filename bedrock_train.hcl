@@ -9,7 +9,7 @@ train {
     ]
     script = [{sh = ["python3 task_features_trainer.py"]}]
     resources {
-      cpu = "2"
+      cpu    = "2"
       memory = "12G"
     }
     retry {
@@ -25,7 +25,7 @@ train {
     ]
     script = [{sh = ["python3 task_train.py"]}]
     resources {
-      cpu = "2"
+      cpu    = "2"
       memory = "14G"
     }
     retry {
