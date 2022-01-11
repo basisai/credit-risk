@@ -15,7 +15,6 @@ from credit_analysis.toolkit import (
     acct_table,
     swapset,
 )
-
 from data.utils import analysis_data
 
 LOSS_PER_BAD_ACCT = 2000

@@ -3,10 +3,13 @@ Script to train model.
 """
 import pickle
 import time
+from datetime import datetime
 from os import getenv
+from typing import Any, List, Union
 
 import bdrk
 import numpy as np
+import pandas as pd
 import lightgbm as lgb
 import xgboost as xgb
 from bdrk.model_analyzer import ModelAnalyzer, ModelTypes
@@ -30,13 +33,13 @@ OUTPUT_MODEL_PATH = "/artefact/model.pkl"
 FEATURE_COLS_PATH = "/artefact/feature_cols.pkl"
 
 
-def get_feats_to_use():
+def get_feats_to_use() -> List[str]:
     if MODEL_VER == "xgboost-pruned" or MODEL_VER == "lightgbm-pruned":
         return FEATURES_PRUNED
     return FEATURES
 
 
-def get_model():
+def get_model() -> Any:
     if MODEL_VER == "lightgbm" or MODEL_VER == "lightgbm-pruned":
         return lgb.LGBMClassifier(
             num_leaves=NUM_LEAVES,
@@ -63,7 +66,11 @@ def get_model():
         raise Exception("Model not implemented")
 
 
-def compute_log_metrics(clf, x_val, y_val):
+def compute_log_metrics(
+    clf: Any,
+    x_val: Union[np.ndarray, pd.DataFrame],
+    y_val: np.ndarray,
+) -> None:
     """Compute and log metrics."""
     y_prob = clf.predict_proba(x_val)[:, 1]
     y_pred = (y_prob > 0.5).astype(int)
@@ -102,10 +109,10 @@ def compute_log_metrics(clf, x_val, y_val):
     analyzer.analyze()
 
 
-def trainer(execution_date):
+def trainer(execution_date: datetime) -> None:
     """Entry point to perform training."""
     print("\nLoad train data")
-    data = load_data(TMP_BUCKET + "credit_train/train.csv")
+    data = load_data(f"{TMP_BUCKET}/credit_train/train.csv")
     data = data.fillna(0)
     print("  Train data shape:", data.shape)
 
@@ -155,7 +162,7 @@ def trainer(execution_date):
     copyfile("data/test.gz.parquet", "/artefact/test.gz.parquet")
 
 
-def main():
+def main() -> None:
     execution_date = get_execution_date()
     print(execution_date.strftime("\nExecution date is %Y-%m-%d"))
     trainer(execution_date)
